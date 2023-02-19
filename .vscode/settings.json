@@ -1,6 +1,19 @@
 {
   "files.exclude": {
     "**/.git": false,
+    "**/.svn": false,
+    "**/.hg": false,
+    "**/CVS": false,
+    "**/.DS_Store": false,
+    "**/Thumbs.db": false,
+    "target": false,
+    "**/.vscode": false,
+    ".vscode": false,
+    ".git": false,
+    "Cargo.lock": false
+  },
+  "explorerExclude.backup": {
+    "**/.git": false,
     "**/.svn": true,
     "**/.hg": true,
     "**/CVS": true,
@@ -11,6 +24,5 @@
     ".vscode": true,
     ".git": true,
     "Cargo.lock": true
-  },
-  "explorerExclude.backup": {}
+  }
 }
