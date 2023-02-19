@@ -1,2 +1,7 @@
-# logos
-A news feed, a really good one!
+# Logos
+
+> A news feed, a really good one!
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
