@@ -52,3 +52,9 @@ next-env.d.ts
 *.vsix
 
 /clients/web/.vscode
+
+.env
+
+*.lock
+
+/Cargo.lock

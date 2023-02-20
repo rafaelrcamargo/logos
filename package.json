@@ -1,10 +1,12 @@
 {
   "name": "logos",
-  "version": "0.0.0",
   "author": "RafaelRCamargo",
   "description": "A news feed, a really good one!",
   "scripts": {
     "start": "sh tools/start.sh"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^2.8.4"
+  }
 }

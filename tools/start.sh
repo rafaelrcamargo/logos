@@ -13,7 +13,7 @@ if [ $1 = '-c' ]; then
 elif [ $1 = '-s' ]; then
     echo 'Starting service...'
     cd services/$2
-    cargo run
+    cargo watch -q -c -x run
 else
     echo 'Invalid type of application.'
 fi

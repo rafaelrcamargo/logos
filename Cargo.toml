@@ -2,4 +2,5 @@
 
 members = [
   "./services/core",
+  "./services/auth",
 ]
