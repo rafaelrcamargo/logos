@@ -14,7 +14,7 @@ use oauth2::{
 
 use auth::utils::oauth::{github_client, BasicResponse};
 use redis::{Commands, Connection};
-use reqwest::{header, Client};
+use reqwest::{header::HeaderMap, Client};
 
 #[get("/create")]
 pub async fn create(redis: Data<Arc<Mutex<Connection>>>) -> impl Responder {
@@ -49,7 +49,10 @@ pub async fn create(redis: Data<Arc<Mutex<Connection>>>) -> impl Responder {
         )
         .expect("Failed to set Redis key");
 
-    HttpResponse::Ok().body(auth_url.to_string())
+    // Return a redirect to the frontend w/ the session
+    HttpResponse::PermanentRedirect()
+        .append_header(("Location", auth_url.to_string()))
+        .finish()
 }
 
 #[get("/resolve")]
@@ -89,29 +92,9 @@ pub async fn resolve(
         .expect("Failed to delete Redis key");
 
     // Get the user data from GitHub
-    let mut headers = header::HeaderMap::new();
-    headers.insert(
-        "Authorization",
-        format!("Bearer {}", token_result.access_token().secret())
-            .parse()
-            .unwrap()
-    );
+    let user = get_user(token_result.access_token().secret()).await;
 
-    let client = Client::builder()
-        .user_agent("logos-auth")
-        .default_headers(headers)
-        .build()
-        .unwrap();
-
-    let user = client
-        .get("https://api.github.com/user")
-        .send()
-        .await
-        .unwrap()
-        .json::<serde_json::Value>()
-        .await
-        .unwrap();
-
+    // Create session
     session
         .insert(
             "id",
@@ -122,7 +105,36 @@ pub async fn resolve(
         )
         .unwrap();
 
+    // Return a redirect to the frontend w/ the session
     HttpResponse::PermanentRedirect()
         .append_header(("Location", "http://127.0.0.1:3000"))
         .finish()
+}
+
+fn http(headers: HeaderMap) -> Client {
+    Client::builder()
+        .user_agent("logos-auth")
+        .default_headers(headers)
+        .build()
+        .unwrap()
+}
+
+async fn get_user(token: &String) -> serde_json::Value {
+    // Get the user data from GitHub
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "Authorization",
+        format!("Bearer {token}")
+            .parse()
+            .unwrap()
+    );
+
+    http(headers)
+        .get("https://api.github.com/user")
+        .send()
+        .await
+        .unwrap()
+        .json::<serde_json::Value>()
+        .await
+        .unwrap()
 }

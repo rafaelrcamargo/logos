@@ -30,13 +30,7 @@ async fn main() -> std::io::Result<()> {
             .expect("Missing the SESSION_KEY environment variable.");
 
         // Redis setup
-        let redis_url = env::var("REDIS_URL")
-            .expect("Missing the REDIS_URL environment variable.");
-        let redis_client = Client::open(format!("redis://{redis_url}/"))
-            .expect("Failed to connect to Redis");
-        let redis_connection = redis_client
-            .get_connection()
-            .expect("Failed to get Redis connection");
+        let (redis_url, redis_connection) = redis_setup();
 
         // Middlewares
         let cors = Cors::permissive();
@@ -70,4 +64,19 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8081))?
     .run()
     .await
+}
+
+fn redis_setup() -> (String, redis::Connection) {
+    // Redis setup
+    let redis_url = env::var("REDIS_URL")
+        .expect("Missing the REDIS_URL environment variable.");
+    let redis_client = Client::open(format!("redis://{redis_url}/"))
+        .expect("Failed to connect to Redis");
+
+    (
+        redis_url,
+        redis_client
+            .get_connection()
+            .expect("Failed to get Redis connection")
+    )
 }
