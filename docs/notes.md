@@ -33,3 +33,7 @@ When a writter publish an article, it will be added to the `Feed` table that eac
 | id         | int       | User ID            |
 | email      | string    | User email         |
 | created_at | timestamp | User creation date |
+
+## TODOs
+
+- [ ] Better error handling
