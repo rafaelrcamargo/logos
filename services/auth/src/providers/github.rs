@@ -7,6 +7,7 @@ use actix_web::{
     HttpResponse, Responder
 };
 
+use anyhow::{anyhow, Result};
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode,
     ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier,
@@ -36,13 +37,16 @@ pub async fn create(
         RedirectUrl::new(
             "http://127.0.0.1:8081/api/v1/oauth/github/resolve".to_string()
         )
-        .expect("Invalid redirect URL")
+        .unwrap()
     );
 
-    let mut conn = redis
+    let mut conn = match redis
         .get_tokio_connection_manager()
         .await
-        .expect("Failed to get Redis connection");
+    {
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Ok(conn) => conn
+    };
 
     // Generate a PKCE challenge.
     let (pkce_challenge, pkce_verifier) =
@@ -58,14 +62,17 @@ pub async fn create(
         .set_pkce_challenge(pkce_challenge)
         .url();
 
-    redis::Cmd::set_ex::<&str, &str>(
+    match redis::Cmd::set_ex::<&str, &str>(
         csrf_token.secret(),
         pkce_verifier.secret(),
         600
     )
     .query_async::<_, String>(&mut conn)
     .await
-    .expect("Failed to SET Redis key");
+    {
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        _ => ()
+    }
 
     // Return a redirect to the frontend w/ the session
     HttpResponse::TemporaryRedirect()
@@ -81,44 +88,47 @@ pub async fn resolve(
 ) -> impl Responder {
     let client = github_client();
 
-    let mut conn = redis
+    let mut conn = match redis
         .get_tokio_connection_manager()
         .await
-        .expect("Failed to get Redis connection");
+    {
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Ok(conn) => conn
+    };
 
-    let state = query.state.as_str();
-    let code = query.code.to_string();
-
-    let pkce_verifier = redis::Cmd::get_del::<&str>(state)
+    let pkce_verifier = match redis::Cmd::get_del::<&str>(query.state.as_str())
         .query_async::<_, String>(&mut conn)
         .await
-        .expect("Failed to GET Redis key");
+    {
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Ok(pkce_verifier) => pkce_verifier
+    };
 
     // Generate a PKCE.
     let pkce = PkceCodeVerifier::new(pkce_verifier);
 
     // Now you can trade it for an access token.
-    let token_result = client
-        .exchange_code(AuthorizationCode::new(code))
+    let token_result = match client
+        .exchange_code(AuthorizationCode::new(query.code.to_string()))
         // Set the PKCE code verifier.
         .set_pkce_verifier(pkce)
         .request_async(async_http_client)
         .await
-        .expect("Failed to get token");
+    {
+        Err(_) => return HttpResponse::Forbidden().finish(),
+        Ok(token_result) => token_result
+    };
 
     // Get the user data from GitHub
     let user = get_user(token_result.access_token().secret()).await;
 
     // Create session
-    session
-        .insert(
-            "id",
-            user.get("id")
-                .unwrap()
-                .as_u64()
-                .unwrap()
-        )
-        .unwrap();
+    let uid = match user {
+        Err(_) => return HttpResponse::Forbidden().finish(),
+        Ok(user) => user["id"].as_u64().unwrap()
+    };
+
+    session.insert("id", uid).unwrap();
 
     // Return a redirect to the frontend w/ the session
     HttpResponse::TemporaryRedirect()
@@ -154,8 +164,7 @@ fn http(headers: HeaderMap) -> HTTPClient {
         .unwrap()
 }
 
-async fn get_user(token: &String) -> serde_json::Value {
-    // Get the user data from GitHub
+async fn get_user(token: &String) -> Result<serde_json::Value> {
     let mut headers = HeaderMap::new();
     headers.insert(
         "Authorization",
@@ -164,12 +173,18 @@ async fn get_user(token: &String) -> serde_json::Value {
             .unwrap()
     );
 
-    http(headers)
+    match http(headers)
         .get("https://api.github.com/user")
         .send()
         .await
-        .unwrap()
-        .json::<serde_json::Value>()
-        .await
-        .unwrap()
+    {
+        Err(_) => Err(anyhow!("Failed to get user data from GitHub")),
+        Ok(response) => match response
+            .json::<serde_json::Value>()
+            .await
+        {
+            Err(_) => Err(anyhow!("Failed to parse user data from GitHub")),
+            Ok(user) => Ok(user)
+        }
+    }
 }
