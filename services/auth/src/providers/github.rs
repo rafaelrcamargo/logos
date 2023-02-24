@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::env;
 
 use actix_session::Session;
 use actix_web::{
@@ -8,22 +8,41 @@ use actix_web::{
 };
 
 use oauth2::{
-    reqwest::async_http_client, AuthorizationCode, CsrfToken,
-    PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, Scope, TokenResponse
+    basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode,
+    ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier,
+    RedirectUrl, Scope, TokenResponse, TokenUrl
 };
 
-use auth::utils::oauth::{github_client, BasicResponse};
-use redis::{Commands, Connection};
-use reqwest::{header::HeaderMap, Client};
+use crate::providers::BasicResponse;
+
+use redis::Client as RedisClient;
+use reqwest::{header::HeaderMap, Client as HTTPClient};
 
 #[get("/create")]
-pub async fn create(redis: Data<Arc<Mutex<Connection>>>) -> impl Responder {
+pub async fn create(
+    redis: Data<RedisClient>,
+    session: Session
+) -> impl Responder {
+    match session.get::<u32>("id") {
+        Err(_) => {
+            return HttpResponse::TemporaryRedirect()
+                .append_header(("Location", "http://127.0.0.1:3000"))
+                .finish()
+        }
+        _ => ()
+    }
+
     let client = github_client().set_redirect_uri(
         RedirectUrl::new(
             "http://127.0.0.1:8081/api/v1/oauth/github/resolve".to_string()
         )
         .expect("Invalid redirect URL")
     );
+
+    let mut conn = redis
+        .get_tokio_connection_manager()
+        .await
+        .expect("Failed to get Redis connection");
 
     // Generate a PKCE challenge.
     let (pkce_challenge, pkce_verifier) =
@@ -39,38 +58,41 @@ pub async fn create(redis: Data<Arc<Mutex<Connection>>>) -> impl Responder {
         .set_pkce_challenge(pkce_challenge)
         .url();
 
-    let _ = redis
-        .lock()
-        .expect("Failed to lock Redis connection")
-        .set_ex::<&str, &str, String>(
-            csrf_token.secret(),
-            pkce_verifier.secret(),
-            600
-        )
-        .expect("Failed to set Redis key");
+    redis::Cmd::set_ex::<&str, &str>(
+        csrf_token.secret(),
+        pkce_verifier.secret(),
+        600
+    )
+    .query_async::<_, String>(&mut conn)
+    .await
+    .expect("Failed to SET Redis key");
 
     // Return a redirect to the frontend w/ the session
-    HttpResponse::PermanentRedirect()
+    HttpResponse::TemporaryRedirect()
         .append_header(("Location", auth_url.to_string()))
         .finish()
 }
 
 #[get("/resolve")]
 pub async fn resolve(
-    redis: Data<Arc<Mutex<Connection>>>,
-    session: Session,
-    query: Query<BasicResponse>
+    redis: Data<RedisClient>,
+    query: Query<BasicResponse>,
+    session: Session
 ) -> impl Responder {
     let client = github_client();
+
+    let mut conn = redis
+        .get_tokio_connection_manager()
+        .await
+        .expect("Failed to get Redis connection");
 
     let state = query.state.as_str();
     let code = query.code.to_string();
 
-    let pkce_verifier = redis
-        .lock()
-        .expect("Failed to lock Redis connection")
-        .get::<&str, String>(state)
-        .expect("Failed to set Redis key");
+    let pkce_verifier = redis::Cmd::get_del::<&str>(state)
+        .query_async::<_, String>(&mut conn)
+        .await
+        .expect("Failed to GET Redis key");
 
     // Generate a PKCE.
     let pkce = PkceCodeVerifier::new(pkce_verifier);
@@ -83,13 +105,6 @@ pub async fn resolve(
         .request_async(async_http_client)
         .await
         .expect("Failed to get token");
-
-    // Delete the PKCE verifier from Redis
-    let _ = redis
-        .lock()
-        .expect("Failed to lock Redis connection")
-        .del::<&str, usize>(state)
-        .expect("Failed to delete Redis key");
 
     // Get the user data from GitHub
     let user = get_user(token_result.access_token().secret()).await;
@@ -106,13 +121,33 @@ pub async fn resolve(
         .unwrap();
 
     // Return a redirect to the frontend w/ the session
-    HttpResponse::PermanentRedirect()
+    HttpResponse::TemporaryRedirect()
         .append_header(("Location", "http://127.0.0.1:3000"))
         .finish()
 }
 
-fn http(headers: HeaderMap) -> Client {
-    Client::builder()
+pub fn github_client() -> BasicClient {
+    BasicClient::new(
+        ClientId::new(
+            env::var("GITHUB_CLIENT_ID")
+                .expect("Missing the GITHUB_CLIENT_ID environment variable.")
+        ),
+        Some(ClientSecret::new(env::var("GITHUB_CLIENT_SECRET").expect(
+            "Missing the GITHUB_CLIENT_SECRET environment variable."
+        ))),
+        AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
+            .expect("Invalid authorization endpoint URL"),
+        Some(
+            TokenUrl::new(
+                "https://github.com/login/oauth/access_token".to_string()
+            )
+            .expect("Invalid token endpoint URL")
+        )
+    )
+}
+
+fn http(headers: HeaderMap) -> HTTPClient {
+    HTTPClient::builder()
         .user_agent("logos-auth")
         .default_headers(headers)
         .build()

@@ -2,11 +2,11 @@
   "name": "logos",
   "author": "RafaelRCamargo",
   "description": "A news feed, a really good one!",
+  "devDependencies": {
+    "prettier": "^2.8.4"
+  },
   "scripts": {
     "start": "sh tools/start.sh"
   },
-  "license": "MIT",
-  "devDependencies": {
-    "prettier": "^2.8.4"
-  }
+  "license": "Apache-2.0"
 }

@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
 use actix_web::get;
 use actix_web::{HttpResponse, Responder};
 
-#[get("/")]
+#[get("/ping")]
 async fn ping() -> impl Responder {
     HttpResponse::Ok().body("Pong!")
 }
