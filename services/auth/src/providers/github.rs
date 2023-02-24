@@ -24,13 +24,10 @@ pub async fn create(
     redis: Data<RedisClient>,
     session: Session
 ) -> impl Responder {
-    match session.get::<u32>("id") {
-        Err(_) => {
-            return HttpResponse::TemporaryRedirect()
-                .append_header(("Location", "http://127.0.0.1:3000"))
-                .finish()
-        }
-        _ => ()
+    if session.get::<u32>("id").is_ok() {
+        return HttpResponse::TemporaryRedirect()
+            .append_header(("Location", "http://127.0.0.1:3000"))
+            .finish();
     }
 
     let client = github_client().set_redirect_uri(
@@ -62,16 +59,16 @@ pub async fn create(
         .set_pkce_challenge(pkce_challenge)
         .url();
 
-    match redis::Cmd::set_ex::<&str, &str>(
+    if (redis::Cmd::set_ex::<&str, &str>(
         csrf_token.secret(),
         pkce_verifier.secret(),
         600
     )
     .query_async::<_, String>(&mut conn)
-    .await
+    .await)
+        .is_err()
     {
-        Err(_) => return HttpResponse::InternalServerError().finish(),
-        _ => ()
+        return HttpResponse::InternalServerError().finish();
     }
 
     // Return a redirect to the frontend w/ the session
