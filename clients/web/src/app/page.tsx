@@ -1,21 +1,14 @@
-"use client"
-
 import clsx from "clsx"
 
-import { Inter } from "@next/font/google"
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Suspense } from "react"
+const Hello = dynamic(() => import("components/hello"), { ssr: false })
+
+import { Inter } from "next/font/google"
+import Loading from "app/loading"
+import dynamic from "next/dynamic"
 const inter = Inter({ variable: "--font-inter" })
 
 export default function Home() {
-  const [session, setSession] = useState<boolean>(false)
-
-  useEffect(() => {
-    if (document.cookie.includes("id")) {
-      setSession(true)
-    }
-  }, [])
-
   return (
     <main
       className={clsx(
@@ -23,25 +16,9 @@ export default function Home() {
         inter.variable
       )}
     >
-      {session ? (
-        <h1 className="font-black text-6xl dark:text-zinc-100 text-zinc-900">
-          Welcome to Logos!
-        </h1>
-      ) : (
-        <>
-          <h1 className="font-black text-6xl dark:text-zinc-100 text-zinc-900">
-            Sign in:
-          </h1>
-          <div className="flex flex-col gap-4">
-            <Link
-              href={"http://127.0.0.1:8081/api/v1/oauth/github/create"}
-              className="text-xl font-bold text-blue-500 underline"
-            >
-              Github
-            </Link>
-          </div>
-        </>
-      )}
+      <Suspense fallback={<Loading />}>
+        <Hello />
+      </Suspense>
     </main>
   )
 }

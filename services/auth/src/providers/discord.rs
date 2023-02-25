@@ -19,23 +19,20 @@ pub async fn create(
     redis: Data<RedisClient>,
     session: Session
 ) -> impl Responder {
-    let provider = Provider::Github;
+    let provider = Provider::Discord;
     has_valid_from(session, provider.to_string());
 
     let (client, return_url) = OauthClient::from(
         provider.to_string(),
-        "https://github.com/login/oauth/authorize",
-        "https://github.com/login/oauth/authorize"
+        "https://discord.com/api/oauth2/authorize",
+        "https://discord.com/api/oauth2/token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            println!("Error connecting to redis");
-            return HttpResponse::ServiceUnavailable().finish();
-        }
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
         Ok(conn) => conn
     };
 
@@ -48,8 +45,8 @@ pub async fn create(
         .set_redirect_uri(return_url)
         .authorize_url(CsrfToken::new_random)
         // Set the desired scopes.
-        .add_scope(Scope::new("read:user".to_string()))
-        .add_scope(Scope::new("user:email".to_string()))
+        .add_scope(Scope::new("identify".to_string()))
+        .add_scope(Scope::new("email".to_string()))
         // Set the PKCE code challenge.
         .set_pkce_challenge(pkce_challenge)
         .url();
@@ -63,14 +60,7 @@ pub async fn create(
     .await)
         .is_err()
     {
-        println!("Error SETTING redis key");
         return HttpResponse::InternalServerError().finish();
-    } else {
-        println!(
-            "SET redis key {}: {}",
-            csrf_token.secret(),
-            pkce_verifier.secret()
-        );
     }
 
     // Return a redirect to the frontend w/ the session
@@ -85,21 +75,18 @@ pub async fn resolve(
     query: Query<BasicResponse>,
     session: Session
 ) -> impl Responder {
-    let provider = Provider::Github;
-    let (client, _) = OauthClient::from(
+    let provider = Provider::Discord;
+    let (client, return_url) = OauthClient::from(
         provider.to_string(),
-        "https://github.com/login/oauth/authorize",
-        "https://github.com/login/oauth/access_token"
+        "https://discord.com/api/oauth2/authorize",
+        "https://discord.com/api/oauth2/token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            println!("Error connecting to redis");
-            return HttpResponse::ServiceUnavailable().finish();
-        }
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
         Ok(conn) => conn
     };
 
@@ -107,30 +94,23 @@ pub async fn resolve(
         .query_async::<_, String>(&mut conn)
         .await
     {
-        Err(_) => {
-            println!("Error GETTING PKCE verifier");
-            return HttpResponse::InternalServerError().finish();
-        }
+        Err(_) => return HttpResponse::InternalServerError().finish(),
         Ok(pkce_verifier) => pkce_verifier
     };
-
-    println!("yey {}: {:?}", query.state.to_string(), pkce_verifier);
 
     // Generate a PKCE.
     let pkce = PkceCodeVerifier::new(pkce_verifier);
 
     // Now you can trade it for an access token.
     let token_result = match client
+        .set_redirect_uri(return_url)
         .exchange_code(AuthorizationCode::new(query.code.to_string()))
         // Set the PKCE code verifier.
         .set_pkce_verifier(pkce)
         .request_async(async_http_client)
         .await
     {
-        Err(e) => {
-            println!("Error exchanging code for token, {e:?}");
-            return HttpResponse::Forbidden().finish();
-        }
+        Err(_) => return HttpResponse::Forbidden().finish(),
         Ok(token_result) => token_result
     };
 
@@ -138,7 +118,6 @@ pub async fn resolve(
         .insert("provider", provider.to_string())
         .is_err()
     {
-        println!("Error setting provider in session");
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -151,15 +130,11 @@ pub async fn resolve(
 
     // Create session
     let uid = match user {
-        Err(_) => {
-            println!("Error getting user data");
-            return HttpResponse::Forbidden().finish();
-        }
+        Err(_) => return HttpResponse::Forbidden().finish(),
         Ok(user) => user["id"].to_string()
     };
 
     if session.insert("id", uid).is_err() {
-        println!("Error setting id in session");
         return HttpResponse::InternalServerError().finish();
     }
 

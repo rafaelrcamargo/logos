@@ -1,3 +1,5 @@
+#![feature(is_some_and)]
+
 use std::env;
 
 use actix_cors::Cors;
@@ -5,7 +7,7 @@ use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
 use actix_web::{
     cookie::{Key, SameSite},
     middleware::Logger,
-    web::{self, scope, Data},
+    web::{scope, Data, ServiceConfig},
     App, HttpServer
 };
 
@@ -13,17 +15,24 @@ use dotenv::{dotenv, vars};
 use redis::Client;
 
 use auth::*;
+use utils::*;
 
 mod providers;
-use providers::github::*;
+use providers::{discord, github};
 
-fn app_config(cfg: &mut web::ServiceConfig) {
+fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/api/v1/oauth").service(
-            scope("github")
-                .service(resolve)
-                .service(create)
-        )
+        scope("/api/v1/oauth")
+            .service(
+                scope("discord")
+                    .service(discord::create)
+                    .service(discord::resolve)
+            )
+            .service(
+                scope("github")
+                    .service(github::create)
+                    .service(github::resolve)
+            )
     );
 }
 
@@ -33,7 +42,7 @@ async fn main() -> std::io::Result<()> {
     logger_setup(); // Setup logger
 
     // Check if all the required environment variables are set
-    check_env(vars().collect::<Vec<(String, String)>>()); // ? This solves the problem of forgetting to set any env used only in specific routes
+    check_env(vars().collect::<Vec<(String, String)>>());
 
     // Session setup
     let session_key = env::var("SESSION_KEY")

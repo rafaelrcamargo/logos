@@ -1,5 +1,6 @@
-use colored::*;
 use std::io::Write;
+
+use colored::*;
 
 pub fn logger_setup() {
     env_logger::builder()
@@ -8,7 +9,10 @@ pub fn logger_setup() {
             writeln!(
                 buf,
                 "[{} {}] {}",
-                chrono::Local::now().format("%H:%M:%S").to_string().dimmed(),
+                chrono::Local::now()
+                    .format("%H:%M:%S")
+                    .to_string()
+                    .dimmed(),
                 highlight_level(record.level()),
                 record.args()
             )
@@ -26,13 +30,15 @@ pub fn highlight_logger() -> String {
     )
 }
 
-pub fn highlight_level<T: std::fmt::Display>(text: T) -> colored::ColoredString {
+pub fn highlight_level<T: std::fmt::Display>(
+    text: T
+) -> colored::ColoredString {
     match text.to_string().as_str() {
         "ERROR" => text.to_string().red(),
         "WARN" => text.to_string().yellow(),
         "INFO" => text.to_string().green(),
         "DEBUG" => text.to_string().blue(),
         "TRACE" => text.to_string().dimmed(),
-        _ => text.to_string().normal(),
+        _ => text.to_string().normal()
     }
 }
