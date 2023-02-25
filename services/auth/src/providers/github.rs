@@ -121,7 +121,7 @@ pub async fn resolve(
 
     // Get the user data
     let user = get_user_from(
-        API::from(provider),
+        Api::from(provider),
         token_result.access_token().secret()
     )
     .await;

@@ -33,6 +33,6 @@ pub fn check_env(vars: Vec<(String, String)>) {
             .collect::<Vec<String>>()
             .join(", ");
 
-        panic!("Missing environment variables: {}", missing);
+        panic!("Missing environment variables: {missing}");
     }
 }

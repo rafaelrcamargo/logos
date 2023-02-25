@@ -30,23 +30,21 @@ impl OauthClient {
         BasicClient::new(
             ClientId::new(
                 env::var(format!("{}_CLIENT_ID", provider.to_uppercase()))
-                    .expect(
-                        format!(
+                    .unwrap_or_else(|_| {
+                        panic!(
                             "Missing the {}_CLIENT_ID environment variable.",
                             provider.to_uppercase()
                         )
-                        .as_str()
-                    )
+                    })
             ),
             Some(ClientSecret::new(
                 env::var(format!("{}_CLIENT_SECRET", provider.to_uppercase()))
-                    .expect(
-                        format!(
-                        "Missing the {}_CLIENT_SECRET environment variable.",
-                        provider.to_uppercase()
-                    )
-                        .as_str()
-                    )
+                    .unwrap_or_else(|_| {
+                        panic!(
+                            "Missing the {}_CLIENT_ID environment variable.",
+                            provider.to_uppercase()
+                        )
+                    })
             )),
             AuthUrl::new(auth_url.to_owned())
                 .expect("Invalid authorization endpoint URL"),
@@ -57,8 +55,7 @@ impl OauthClient {
         )
         .set_redirect_uri(
             RedirectUrl::new(format!(
-                "http://127.0.0.1:8081/api/v1/oauth/{}/resolve",
-                provider
+                "http://127.0.0.1:8081/api/v1/oauth/{provider}/resolve"
             ))
             .expect("Invalid redirect URL")
         )
@@ -67,13 +64,9 @@ impl OauthClient {
 
 pub fn has_valid_from(session: Session, provider: String) -> bool {
     if let Ok(og) = session.get::<String>("provider") {
-        if og.is_some_and(|x| x == provider) {
-            return true;
-        } else {
-            return false;
-        }
+        og.is_some_and(|x| x == provider)
     } else {
-        return false;
+        false
     }
 }
 
@@ -100,9 +93,9 @@ impl ToString for Provider {
 }
 
 #[non_exhaustive]
-pub struct API;
+pub struct Api;
 
-impl API {
+impl Api {
     pub fn from(provider: Provider) -> Url {
         match provider {
             Provider::Discord => {
