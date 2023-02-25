@@ -22,7 +22,7 @@ pub async fn create(
     let provider = Provider::Discord;
     has_valid_from(session, provider.to_string());
 
-    let (client, return_url) = OauthClient::from(
+    let client = OauthClient::from(
         provider.to_string(),
         "https://discord.com/api/oauth2/authorize",
         "https://discord.com/api/oauth2/token"
@@ -42,11 +42,10 @@ pub async fn create(
 
     // Generate the full authorization URL.
     let (auth_url, csrf_token) = client
-        .set_redirect_uri(return_url)
         .authorize_url(CsrfToken::new_random)
         // Set the desired scopes.
-        .add_scope(Scope::new("identify".to_string()))
         .add_scope(Scope::new("email".to_string()))
+        .add_scope(Scope::new("identify".to_string()))
         // Set the PKCE code challenge.
         .set_pkce_challenge(pkce_challenge)
         .url();
@@ -76,7 +75,7 @@ pub async fn resolve(
     session: Session
 ) -> impl Responder {
     let provider = Provider::Discord;
-    let (client, return_url) = OauthClient::from(
+    let client = OauthClient::from(
         provider.to_string(),
         "https://discord.com/api/oauth2/authorize",
         "https://discord.com/api/oauth2/token"
@@ -103,7 +102,6 @@ pub async fn resolve(
 
     // Now you can trade it for an access token.
     let token_result = match client
-        .set_redirect_uri(return_url)
         .exchange_code(AuthorizationCode::new(query.code.to_string()))
         // Set the PKCE code verifier.
         .set_pkce_verifier(pkce)
@@ -143,3 +141,8 @@ pub async fn resolve(
         .append_header(("Location", "http://127.0.0.1:3000"))
         .finish()
 }
+
+// fn create_oauth_provider(provider: Provider) -> impl Responder {
+// ...
+// }
+//

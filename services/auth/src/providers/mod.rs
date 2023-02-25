@@ -26,24 +26,20 @@ impl OauthClient {
         provider: String,
         auth_url: &str,
         token_url: &str
-    ) -> (BasicClient, RedirectUrl) {
-        (
-            BasicClient::new(
-                ClientId::new(
-                    env::var(format!("{}_CLIENT_ID", provider.to_uppercase()))
-                        .expect(
-                            format!(
+    ) -> BasicClient {
+        BasicClient::new(
+            ClientId::new(
+                env::var(format!("{}_CLIENT_ID", provider.to_uppercase()))
+                    .expect(
+                        format!(
                             "Missing the {}_CLIENT_ID environment variable.",
                             provider.to_uppercase()
                         )
-                            .as_str()
-                        )
-                ),
-                Some(ClientSecret::new(
-                    env::var(format!(
-                        "{}_CLIENT_SECRET",
-                        provider.to_uppercase()
-                    ))
+                        .as_str()
+                    )
+            ),
+            Some(ClientSecret::new(
+                env::var(format!("{}_CLIENT_SECRET", provider.to_uppercase()))
                     .expect(
                         format!(
                         "Missing the {}_CLIENT_SECRET environment variable.",
@@ -51,14 +47,15 @@ impl OauthClient {
                     )
                         .as_str()
                     )
-                )),
-                AuthUrl::new(auth_url.to_owned())
-                    .expect("Invalid authorization endpoint URL"),
-                Some(
-                    TokenUrl::new(token_url.to_owned())
-                        .expect("Invalid token endpoint URL")
-                )
-            ),
+            )),
+            AuthUrl::new(auth_url.to_owned())
+                .expect("Invalid authorization endpoint URL"),
+            Some(
+                TokenUrl::new(token_url.to_owned())
+                    .expect("Invalid token endpoint URL")
+            )
+        )
+        .set_redirect_uri(
             RedirectUrl::new(format!(
                 "http://127.0.0.1:8081/api/v1/oauth/{}/resolve",
                 provider

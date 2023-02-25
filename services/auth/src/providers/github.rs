@@ -22,20 +22,17 @@ pub async fn create(
     let provider = Provider::Github;
     has_valid_from(session, provider.to_string());
 
-    let (client, return_url) = OauthClient::from(
+    let client = OauthClient::from(
         provider.to_string(),
         "https://github.com/login/oauth/authorize",
-        "https://github.com/login/oauth/authorize"
+        "https://github.com/login/oauth/access_token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            println!("Error connecting to redis");
-            return HttpResponse::ServiceUnavailable().finish();
-        }
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
         Ok(conn) => conn
     };
 
@@ -45,7 +42,6 @@ pub async fn create(
 
     // Generate the full authorization URL.
     let (auth_url, csrf_token) = client
-        .set_redirect_uri(return_url)
         .authorize_url(CsrfToken::new_random)
         // Set the desired scopes.
         .add_scope(Scope::new("read:user".to_string()))
@@ -63,14 +59,7 @@ pub async fn create(
     .await)
         .is_err()
     {
-        println!("Error SETTING redis key");
         return HttpResponse::InternalServerError().finish();
-    } else {
-        println!(
-            "SET redis key {}: {}",
-            csrf_token.secret(),
-            pkce_verifier.secret()
-        );
     }
 
     // Return a redirect to the frontend w/ the session
@@ -86,20 +75,17 @@ pub async fn resolve(
     session: Session
 ) -> impl Responder {
     let provider = Provider::Github;
-    let (client, _) = OauthClient::from(
+    let client = OauthClient::from(
         provider.to_string(),
         "https://github.com/login/oauth/authorize",
-        "https://github.com/login/oauth/access_token"
+        "https://github.com/login/oauth/authorize"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            println!("Error connecting to redis");
-            return HttpResponse::ServiceUnavailable().finish();
-        }
+        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
         Ok(conn) => conn
     };
 
@@ -107,14 +93,9 @@ pub async fn resolve(
         .query_async::<_, String>(&mut conn)
         .await
     {
-        Err(_) => {
-            println!("Error GETTING PKCE verifier");
-            return HttpResponse::InternalServerError().finish();
-        }
+        Err(_) => return HttpResponse::InternalServerError().finish(),
         Ok(pkce_verifier) => pkce_verifier
     };
-
-    println!("yey {}: {:?}", query.state.to_string(), pkce_verifier);
 
     // Generate a PKCE.
     let pkce = PkceCodeVerifier::new(pkce_verifier);
@@ -127,10 +108,7 @@ pub async fn resolve(
         .request_async(async_http_client)
         .await
     {
-        Err(e) => {
-            println!("Error exchanging code for token, {e:?}");
-            return HttpResponse::Forbidden().finish();
-        }
+        Err(_) => return HttpResponse::Forbidden().finish(),
         Ok(token_result) => token_result
     };
 
@@ -138,7 +116,6 @@ pub async fn resolve(
         .insert("provider", provider.to_string())
         .is_err()
     {
-        println!("Error setting provider in session");
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -151,15 +128,11 @@ pub async fn resolve(
 
     // Create session
     let uid = match user {
-        Err(_) => {
-            println!("Error getting user data");
-            return HttpResponse::Forbidden().finish();
-        }
+        Err(_) => return HttpResponse::Forbidden().finish(),
         Ok(user) => user["id"].to_string()
     };
 
     if session.insert("id", uid).is_err() {
-        println!("Error setting id in session");
         return HttpResponse::InternalServerError().finish();
     }
 
