@@ -60,7 +60,7 @@ Just some basic data structures, for visualization purposes.
 
 ## TODOs
 
-- [ ] Better error handling
+- [x] Better error handling
 
 ## Stack
 
