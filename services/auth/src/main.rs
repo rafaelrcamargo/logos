@@ -1,5 +1,7 @@
 #![feature(is_some_and)]
 
+mod oauth;
+
 use std::env;
 
 use actix_cors::Cors;
@@ -17,27 +19,11 @@ use redis::Client;
 use auth::*;
 use utils::*;
 
-mod providers;
-use providers::{discord, github, spotify};
-
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/api/v1/oauth")
-            .service(
-                scope("discord")
-                    .service(discord::create)
-                    .service(discord::resolve)
-            )
-            .service(
-                scope("github")
-                    .service(github::create)
-                    .service(github::resolve)
-            )
-            .service(
-                scope("spotify")
-                    .service(spotify::create)
-                    .service(spotify::resolve)
-            )
+            .service(oauth::create)
+            .service(oauth::resolve)
     );
 }
 
