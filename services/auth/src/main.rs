@@ -18,7 +18,7 @@ use auth::*;
 use utils::*;
 
 mod providers;
-use providers::{discord, github};
+use providers::{discord, github, spotify};
 
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -32,6 +32,11 @@ fn app_config(cfg: &mut ServiceConfig) {
                 scope("github")
                     .service(github::create)
                     .service(github::resolve)
+            )
+            .service(
+                scope("spotify")
+                    .service(spotify::create)
+                    .service(spotify::resolve)
             )
     );
 }

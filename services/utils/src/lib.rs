@@ -2,6 +2,8 @@ use std::io::Write;
 
 use colored::*;
 
+pub use log::{debug, error, info, trace, warn};
+
 pub fn logger_setup() {
     env_logger::builder()
         .filter_level(log::LevelFilter::Info)

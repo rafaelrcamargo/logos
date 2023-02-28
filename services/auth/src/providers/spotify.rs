@@ -11,6 +11,7 @@ use oauth2::{
 };
 
 use redis::Client as RedisClient;
+use utils::{error, warn};
 
 use crate::providers::*;
 
@@ -19,20 +20,23 @@ pub async fn create(
     redis: Data<RedisClient>,
     session: Session
 ) -> impl Responder {
-    let provider = Provider::Discord;
+    let provider = Provider::Spotify;
     has_valid_from(session, provider.to_string());
 
     let client = OauthClient::from(
         provider.to_string(),
-        "https://discord.com/api/oauth2/authorize",
-        "https://discord.com/api/oauth2/token"
+        "https://accounts.spotify.com/authorize",
+        "https://accounts.spotify.com/api/token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Err(_) => {
+            error!("Error getting Redis connection");
+            return HttpResponse::ServiceUnavailable().finish();
+        }
         Ok(conn) => conn
     };
 
@@ -44,8 +48,7 @@ pub async fn create(
     let (auth_url, csrf_token) = client
         .authorize_url(CsrfToken::new_random)
         // Set the desired scopes.
-        .add_scope(Scope::new("email".to_string()))
-        .add_scope(Scope::new("identify".to_string()))
+        .add_scope(Scope::new("user-read-email".to_string()))
         // Set the PKCE code challenge.
         .set_pkce_challenge(pkce_challenge)
         .url();
@@ -59,6 +62,7 @@ pub async fn create(
     .await)
         .is_err()
     {
+        error!("Error setting Redis key");
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -74,18 +78,21 @@ pub async fn resolve(
     query: Query<BasicResponse>,
     session: Session
 ) -> impl Responder {
-    let provider = Provider::Discord;
+    let provider = Provider::Spotify;
     let client = OauthClient::from(
         provider.to_string(),
-        "https://discord.com/api/oauth2/authorize",
-        "https://discord.com/api/oauth2/token"
+        "https://accounts.spotify.com/authorize",
+        "https://accounts.spotify.com/api/token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Err(_) => {
+            error!("Error getting Redis connection");
+            return HttpResponse::ServiceUnavailable().finish();
+        }
         Ok(conn) => conn
     };
 
@@ -93,7 +100,10 @@ pub async fn resolve(
         .query_async::<_, String>(&mut conn)
         .await
     {
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => {
+            error!("Error getting Redis key");
+            return HttpResponse::InternalServerError().finish();
+        }
         Ok(pkce_verifier) => pkce_verifier
     };
 
@@ -108,7 +118,10 @@ pub async fn resolve(
         .request_async(async_http_client)
         .await
     {
-        Err(_) => return HttpResponse::Forbidden().finish(),
+        Err(_) => {
+            error!("Error retrieving USER token from OAuth provider");
+            return HttpResponse::Forbidden().finish();
+        }
         Ok(token_result) => token_result
     };
 
@@ -116,23 +129,25 @@ pub async fn resolve(
         .insert("provider", provider.to_string())
         .is_err()
     {
-        return HttpResponse::InternalServerError().finish();
+        warn!("Error adding the OAuth provider to the USER session");
     }
 
     // Get the user data
-    let user = get_user(
-        Api::from(&provider),
-        token_result.access_token().secret()
-    )
-    .await;
+    let user =
+        get_user(Api::from(&provider), token_result.access_token().secret())
+            .await;
 
     // Create session
     let uid = match user {
-        Err(_) => return HttpResponse::Forbidden().finish(),
+        Err(_) => {
+            error!("Error getting USER data from OAuth provider");
+            return HttpResponse::Forbidden().finish();
+        }
         Ok(user) => user["id"].to_string()
     };
 
     if session.insert("id", uid).is_err() {
+        error!("Error creating USER session");
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -141,8 +156,3 @@ pub async fn resolve(
         .append_header(("Location", "http://127.0.0.1:3000"))
         .finish()
 }
-
-// fn create_oauth_provider(provider: Provider) -> impl Responder {
-// ...
-// }
-//

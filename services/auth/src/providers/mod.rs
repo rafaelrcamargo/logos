@@ -1,5 +1,6 @@
 pub mod discord;
 pub mod github;
+pub mod spotify;
 
 use std::env;
 
@@ -12,7 +13,7 @@ use serde::Deserialize;
 use oauth2::{
     basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl
 };
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 #[derive(Deserialize)]
 pub struct BasicResponse {
@@ -80,14 +81,16 @@ fn http(headers: HeaderMap) -> HTTPClient {
 
 pub enum Provider {
     Discord,
-    Github
+    Github,
+    Spotify
 }
 
 impl ToString for Provider {
     fn to_string(&self) -> String {
         match self {
             Provider::Discord => "discord".to_string(),
-            Provider::Github => "github".to_string()
+            Provider::Github => "github".to_string(),
+            Provider::Spotify => "spotify".to_string()
         }
     }
 }
@@ -96,19 +99,22 @@ impl ToString for Provider {
 pub struct Api;
 
 impl Api {
-    pub fn from(provider: Provider) -> Url {
+    pub fn from(provider: &Provider) -> Url {
         match provider {
             Provider::Discord => {
-                Url::parse("https://discord.com/api/v10/users/@me")
-                    .expect("Invalid Discord API URL")
+                Url::parse("https://discord.com/api/v10/users/@me").unwrap()
             }
-            Provider::Github => Url::parse("https://api.github.com/user")
-                .expect("Invalid Github API URL")
+            Provider::Github => {
+                Url::parse("https://api.github.com/user").unwrap()
+            }
+            Provider::Spotify => {
+                Url::parse("https://api.spotify.com/v1/me").unwrap()
+            }
         }
     }
 }
 
-async fn get_user_from(provider: Url, token: &String) -> Result<Value> {
+async fn get_user(provider: Url, token: &String) -> Result<Value> {
     let mut headers = HeaderMap::new();
     headers.insert(
         "Authorization",
@@ -129,5 +135,19 @@ async fn get_user_from(provider: Url, token: &String) -> Result<Value> {
                 Ok(user)
             }
         }
+    }
+}
+
+async fn save_user(provider: String, user: &Map<String, Value>) -> Result<()> {
+    match http(HeaderMap::new())
+        .post(&format!(
+            "https://4006c06b-d8de-4361-8e53-6f7f2b431d32.mock.pstmn.io/api/v1/user?provider={provider}"
+        ))
+        .json::<Map<String, Value>>(user)
+        .send()
+        .await
+    {
+        Err(_) => Err(anyhow!("Failed to get user data")),
+        Ok(_) => Ok(())
     }
 }

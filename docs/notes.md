@@ -89,7 +89,7 @@ And these are the main services I'm planning to use.
   - [Actix](https://actix.rs/)
   - [Redis](https://redis.io/)
   - [OAuth 2](https://oauth.net/2/)
-    - Providers: GutHub, Discord, Reddit.
+    - Providers: GitHub, Discord, Spotify.
   - [MongoDB](https://www.mongodb.com/) OR [Neo4j](https://neo4j.com/) (or other graph DB)
 
 - Feed

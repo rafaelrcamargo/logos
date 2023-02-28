@@ -11,6 +11,8 @@ use oauth2::{
 };
 
 use redis::Client as RedisClient;
+use utils::{error, warn};
+use uuid::Uuid;
 
 use crate::providers::*;
 
@@ -32,7 +34,10 @@ pub async fn create(
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Err(_) => {
+            error!("Error getting Redis connection");
+            return HttpResponse::ServiceUnavailable().finish();
+        }
         Ok(conn) => conn
     };
 
@@ -59,6 +64,7 @@ pub async fn create(
     .await)
         .is_err()
     {
+        error!("Error setting Redis key");
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -78,14 +84,17 @@ pub async fn resolve(
     let client = OauthClient::from(
         provider.to_string(),
         "https://github.com/login/oauth/authorize",
-        "https://github.com/login/oauth/authorize"
+        "https://github.com/login/oauth/access_token"
     );
 
     let mut conn = match redis
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => return HttpResponse::ServiceUnavailable().finish(),
+        Err(_) => {
+            error!("Error getting Redis connection");
+            return HttpResponse::ServiceUnavailable().finish();
+        }
         Ok(conn) => conn
     };
 
@@ -93,7 +102,10 @@ pub async fn resolve(
         .query_async::<_, String>(&mut conn)
         .await
     {
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => {
+            error!("Error getting Redis key");
+            return HttpResponse::InternalServerError().finish();
+        }
         Ok(pkce_verifier) => pkce_verifier
     };
 
@@ -108,7 +120,10 @@ pub async fn resolve(
         .request_async(async_http_client)
         .await
     {
-        Err(_) => return HttpResponse::Forbidden().finish(),
+        Err(_) => {
+            error!("Error retrieving USER token from OAuth provider");
+            return HttpResponse::Forbidden().finish();
+        }
         Ok(token_result) => token_result
     };
 
@@ -116,28 +131,48 @@ pub async fn resolve(
         .insert("provider", provider.to_string())
         .is_err()
     {
-        return HttpResponse::InternalServerError().finish();
+        warn!("Error adding the OAuth provider to the USER session");
     }
+
+    // Create a new UUID
+    let id = Uuid::new_v4().to_string();
 
     // Get the user data
-    let user = get_user_from(
-        Api::from(provider),
+    let user = match get_user(
+        Api::from(&provider),
         token_result.access_token().secret()
     )
-    .await;
-
-    // Create session
-    let uid = match user {
-        Err(_) => return HttpResponse::Forbidden().finish(),
-        Ok(user) => user["id"].to_string()
+    .await
+    {
+        Err(_) => {
+            error!("Error getting USER data from OAuth provider");
+            return HttpResponse::InternalServerError().finish();
+        }
+        Ok(user) => match user.as_object() {
+            Some(user) => {
+                let mut user = user.clone();
+                user.insert("id".to_string(), id.clone().into());
+                user
+            }
+            None => {
+                error!("Error parsing USER data");
+                return HttpResponse::InternalServerError().finish();
+            }
+        }
     };
 
-    if session.insert("id", uid).is_err() {
+    // Create session
+    if session.insert("id", id).is_err() {
+        error!("Error creating USER session");
         return HttpResponse::InternalServerError().finish();
     }
 
-    // Return a redirect to the frontend w/ the session
-    HttpResponse::TemporaryRedirect()
-        .append_header(("Location", "http://127.0.0.1:3000"))
-        .finish()
+    match save_user(provider.to_string(), &user).await {
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Ok(_) => {
+            return HttpResponse::TemporaryRedirect()
+                .append_header(("Location", "http://127.0.0.1:3000"))
+                .finish()
+        }
+    }
 }
