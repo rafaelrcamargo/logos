@@ -1,4 +1,4 @@
-use crate::oauth::{get_user, save_user, Api, OAuthClient, Provider};
+use crate::oauth::{get_user, save_user, OAuthClient, Provider};
 use actix_session::Session;
 use actix_web::{
     get,
@@ -9,10 +9,12 @@ use oauth2::{
     reqwest::async_http_client, AuthorizationCode, PkceCodeVerifier,
     TokenResponse
 };
-use redis::Client as RedisClient;
 use serde::Deserialize;
-use utils::{error, warn};
+use utils::{error, info, warn};
 use uuid::Uuid;
+
+use redis::Client as RedisClient;
+use reqwest::Client as HTTPClient;
 
 #[derive(Deserialize)]
 pub struct OAuthResolve {
@@ -24,27 +26,30 @@ pub struct OAuthResolve {
 pub async fn resolve(
     query: Query<OAuthResolve>,
     redis: Data<RedisClient>,
+    http: Data<HTTPClient>,
     session: Session
 ) -> impl Responder {
     let provider = match session.get::<String>("provider") {
-        Ok(Some(provider)) => match Provider::from(&provider) {
-            Ok(provider) => provider,
-            Err(e) => {
-                warn!("{}", format!("Bad Request: {e}"));
-                return HttpResponse::BadRequest().finish();
+        Ok(Some(provider)) => {
+            info!("Provider: {}", provider.to_string());
+            match Provider::from(&provider) {
+                Ok(provider) => provider,
+                Err(e) => {
+                    warn!("{}", format!("Bad Request: {e}"));
+                    return HttpResponse::BadRequest().finish();
+                }
             }
-        },
+        }
         Ok(None) => {
-            warn!("Bad Request: No provider in session");
+            warn!("Bad Request: No provider found in session");
             return HttpResponse::BadRequest().finish();
         }
         Err(_) => {
-            error!("Error getting provider from session");
+            error!("Error getting _ from session");
             return HttpResponse::InternalServerError().finish();
         }
     };
 
-    let api = Api::user(&provider);
     let client = OAuthClient::from(&provider);
 
     let mut conn = match redis
@@ -86,7 +91,13 @@ pub async fn resolve(
     let id = Uuid::new_v4().to_string();
 
     // Get the user data
-    let user = match get_user(api, token_result.access_token().secret()).await {
+    let user = match get_user(
+        http.clone(),
+        &provider,
+        token_result.access_token().secret()
+    )
+    .await
+    {
         Err(_) => {
             error!("Error getting USER data from OAuth provider");
             return HttpResponse::InternalServerError().finish();
@@ -109,7 +120,7 @@ pub async fn resolve(
         return HttpResponse::InternalServerError().finish();
     }
 
-    match save_user(provider.to_string(), &user).await {
+    match save_user(http, &provider, &user).await {
         Err(_) => {
             error!("Error saving USER data");
             HttpResponse::InternalServerError().finish()

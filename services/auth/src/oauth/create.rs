@@ -8,7 +8,7 @@ use actix_web::{
 use oauth2::PkceCodeChallenge;
 use redis::Client as RedisClient;
 use serde::Deserialize;
-use utils::{error, warn};
+use utils::{error, info, warn};
 
 #[derive(Deserialize)]
 pub struct OAuthCreate {
@@ -22,17 +22,29 @@ pub async fn create(
     session: Session
 ) -> impl Responder {
     let provider = match Provider::from(&query.provider) {
-        Ok(provider) => provider,
+        Ok(provider) => {
+            info!("Provider: {}", provider.to_string());
+            provider
+        }
         Err(e) => {
             warn!("{}", format!("Bad Request: {e}"));
             return HttpResponse::BadRequest().finish();
         }
     };
 
-    if is_valid_for(session, provider.to_string()) {
+    if is_valid_for(&session, provider.to_string()) {
+        info!("Redirecting to /");
         return HttpResponse::TemporaryRedirect()
             .append_header(("Location", "http://127.0.0.1:3000"))
             .finish();
+    }
+
+    if session
+        .insert("provider", provider.to_string())
+        .is_err()
+    {
+        error!("Error setting provider in session");
+        return HttpResponse::InternalServerError().finish();
     }
 
     let mut conn = match redis

@@ -14,7 +14,8 @@ use actix_web::{
 };
 
 use dotenv::{dotenv, vars};
-use redis::Client;
+use redis::Client as RedisClient;
+use reqwest::Client as HTTPClient;
 
 use auth::*;
 use utils::*;
@@ -52,14 +53,20 @@ async fn main() -> std::io::Result<()> {
             Key::from(session_key.as_bytes())
         )
         .cookie_http_only(false)
-        .cookie_same_site(SameSite::Strict)
+        .cookie_same_site(SameSite::Lax)
         .build();
+
+        let http = HTTPClient::builder()
+            .user_agent("logos-auth")
+            .build()
+            .unwrap();
 
         App::new()
             .wrap(cors)
             .wrap(logger)
             .wrap(session)
             .configure(app_config)
+            .app_data(Data::new(http))
             .app_data(Data::new(redis_connection.clone()))
     })
     .bind(("127.0.0.1", 8081))?
@@ -71,7 +78,7 @@ fn redis_setup() -> (String, redis::Client) {
     let redis_url = env::var("REDIS_URL")
         .expect("Missing the REDIS_URL environment variable.");
 
-    let redis_pool = Client::open(format!("redis://{redis_url}/"))
+    let redis_pool = RedisClient::open(format!("redis://{redis_url}/"))
         .expect("Failed to connect to Redis");
 
     (redis_url, redis_pool)

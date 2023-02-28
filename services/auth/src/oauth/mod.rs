@@ -1,4 +1,5 @@
 mod create;
+use actix_web::web::Data;
 pub use create::*;
 
 mod resolve;
@@ -10,7 +11,7 @@ use oauth2::{
     basic::BasicClient, AuthUrl, AuthorizationRequest, ClientId, ClientSecret,
     CsrfToken, RedirectUrl, Scope, TokenUrl
 };
-use reqwest::{header::HeaderMap, Client as HTTPClient, Url};
+use reqwest::{Client as HTTPClient, Url};
 use serde_json::{Map, Value};
 use std::env;
 
@@ -121,26 +122,18 @@ impl OAuthClient {
     }
 }
 
-// HTTP
-fn http(headers: HeaderMap) -> HTTPClient {
-    HTTPClient::builder()
-        .user_agent("logos-auth")
-        .default_headers(headers)
-        .build()
-        .unwrap()
-}
-
 // User
-async fn get_user(provider: Url, token: &String) -> Result<Value> {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "Authorization",
-        format!("Bearer {token}")
-            .parse()
-            .unwrap()
-    );
-
-    match http(headers).get(provider).send().await {
+async fn get_user(
+    http: Data<HTTPClient>,
+    provider: &Provider,
+    token: &String
+) -> Result<Value> {
+    match http
+        .get(Api::user(provider))
+        .header("Authorization", format!("Bearer {token}"))
+        .send()
+        .await
+    {
         Err(_) => Err(anyhow!("Failed to get user data")),
         Ok(response) => match response
             .json::<serde_json::Value>()
@@ -154,10 +147,15 @@ async fn get_user(provider: Url, token: &String) -> Result<Value> {
         }
     }
 }
-async fn save_user(provider: String, user: &Map<String, Value>) -> Result<()> {
-    match http(HeaderMap::new())
+async fn save_user(
+    http: Data<HTTPClient>,
+    provider: &Provider,
+    user: &Map<String, Value>
+) -> Result<()> {
+    match http
         .post(&format!(
-            "https://4006c06b-d8de-4361-8e53-6f7f2b431d32.mock.pstmn.io/api/v1/user?provider={provider}"
+            "https://4006c06b-d8de-4361-8e53-6f7f2b431d32.mock.pstmn.io/api/v1/user?provider={}",
+            provider.to_string()
         ))
         .json::<Map<String, Value>>(user)
         .send()
@@ -169,7 +167,7 @@ async fn save_user(provider: String, user: &Map<String, Value>) -> Result<()> {
 }
 
 // Session
-pub fn is_valid_for(session: Session, provider: String) -> bool {
+pub fn is_valid_for(session: &Session, provider: String) -> bool {
     if let Ok(og) = session.get::<String>("provider") {
         og.is_some_and(|x| x == provider)
     } else {
