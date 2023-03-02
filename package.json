@@ -8,5 +8,5 @@
   "scripts": {
     "start": "sh tools/start.sh"
   },
-  "license": "Apache-2.0 or MIT"
+  "license": "Apache-2.0"
 }

@@ -1,15 +1,15 @@
-import { Suspense } from "react"
-const Hello = dynamic(() => import("components/hello"), { ssr: false })
+import { cookies } from "next/headers"
 
-import Loading from "app/loading"
-import dynamic from "next/dynamic"
+import Auth from "components/auth"
+import Welcome from "components/welcome"
 
 export default function Home() {
+  const Cookies = cookies()
+  const session = Cookies.has("id")
+
   return (
     <main className={"center flex-col gap-8 font-sans"}>
-      <Suspense fallback={<Loading />}>
-        <Hello />
-      </Suspense>
+      {session ? <Welcome /> : <Auth />}
     </main>
   )
 }
