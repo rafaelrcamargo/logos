@@ -6,11 +6,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", ...fontFamily.sans],
+        sans: ["var(--font-sans)", ...fontFamily.sans],
+        serif: ["var(--font-serif)", ...fontFamily.serif],
       },
     },
   },
   future: ["hoverOnlyWhenSupported", "respectDefaultRingColorOpacity"],
   experimental: ["optimizeUniversalDefaults"],
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 }

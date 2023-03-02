@@ -6,4 +6,23 @@
   b {
     @apply font-bold;
   }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-bold;
+  }
+
+  p {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .center {
+    @apply flex items-center justify-center;
+  }
 }
