@@ -1,9 +1,11 @@
+use colored::*;
+use dotenv::vars;
 use std::io::Write;
 
-use colored::*;
-
+// ? Logging macros
 pub use log::{debug, error, info, trace, warn};
 
+// ? Logger utils
 pub fn logger_setup() {
     env_logger::builder()
         .filter_level(log::LevelFilter::Info)
@@ -21,7 +23,6 @@ pub fn logger_setup() {
         })
         .init();
 }
-
 pub fn highlight_logger() -> String {
     format!(
         "{} - [{}] {} -> {}",
@@ -31,7 +32,6 @@ pub fn highlight_logger() -> String {
         "%T".dimmed(),
     )
 }
-
 pub fn highlight_level<T: std::fmt::Display>(
     text: T
 ) -> colored::ColoredString {
@@ -42,5 +42,31 @@ pub fn highlight_level<T: std::fmt::Display>(
         "DEBUG" => text.to_string().blue(),
         "TRACE" => text.to_string().dimmed(),
         _ => text.to_string().normal()
+    }
+}
+
+// ? Environment utils
+pub fn check_env(mut required: Vec<(String, bool)>) {
+    let env = vars().collect::<Vec<(String, String)>>();
+
+    env.iter().for_each(|(key, _)| {
+        required
+            .iter_mut()
+            .for_each(|(env, found)| {
+                if key == env {
+                    *found = true;
+                }
+            });
+    });
+
+    if required.iter().any(|(_, found)| !found) {
+        let missing = required
+            .iter()
+            .filter(|(_, found)| !found)
+            .map(|(env, _)| env.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        panic!("Missing environment variables: {missing}");
     }
 }

@@ -1,10 +1,10 @@
-use crate::oauth::{is_valid_for, OAuthClient, Provider};
 use actix_session::Session;
 use actix_web::{
     get,
     web::{Data, Query},
     HttpResponse, Responder
 };
+use auth::{is_valid_for, OAuthClient, Provider};
 use oauth2::PkceCodeChallenge;
 use redis::Client as RedisClient;
 use serde::Deserialize;

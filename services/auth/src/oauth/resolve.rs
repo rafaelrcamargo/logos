@@ -1,20 +1,19 @@
-use crate::oauth::{get_user, save_user, OAuthClient, Provider};
 use actix_session::Session;
 use actix_web::{
     get,
     web::{Data, Query},
     HttpResponse, Responder
 };
+use auth::{get_user, save_user, OAuthClient, Provider};
 use oauth2::{
     reqwest::async_http_client, AuthorizationCode, PkceCodeVerifier,
     TokenResponse
 };
+use redis::Client as RedisClient;
+use reqwest::Client as HTTPClient;
 use serde::Deserialize;
 use utils::{error, info, warn};
 use uuid::Uuid;
-
-use redis::Client as RedisClient;
-use reqwest::Client as HTTPClient;
 
 #[derive(Deserialize)]
 pub struct OAuthResolve {
@@ -31,7 +30,7 @@ pub async fn resolve(
 ) -> impl Responder {
     let provider = match session.get::<String>("provider") {
         Ok(Some(provider)) => {
-            info!("Provider: {}", provider.to_string());
+            info!("Provider: {provider:?}");
             match Provider::from(&provider) {
                 Ok(provider) => provider,
                 Err(e) => {

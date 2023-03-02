@@ -1,8 +1,4 @@
-#![feature(is_some_and)]
-
 mod oauth;
-
-use std::env;
 
 use actix_cors::Cors;
 use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
@@ -12,12 +8,10 @@ use actix_web::{
     web::{scope, Data, ServiceConfig},
     App, HttpServer
 };
-
-use dotenv::{dotenv, vars};
+use dotenv::dotenv;
 use redis::Client as RedisClient;
 use reqwest::Client as HTTPClient;
-
-use auth::*;
+use std::env;
 use utils::*;
 
 fn app_config(cfg: &mut ServiceConfig) {
@@ -34,7 +28,16 @@ async fn main() -> std::io::Result<()> {
     logger_setup(); // Setup logger
 
     // Check if all the required environment variables are set
-    check_env(vars().collect::<Vec<(String, String)>>());
+    check_env(vec![
+        ("REDIS_URL".to_string(), false),
+        ("SESSION_KEY".to_string(), false),
+        ("GITHUB_CLIENT_ID".to_string(), false),
+        ("GITHUB_CLIENT_SECRET".to_string(), false),
+        ("DISCORD_CLIENT_ID".to_string(), false),
+        ("DISCORD_CLIENT_SECRET".to_string(), false),
+        ("SPOTIFY_CLIENT_ID".to_string(), false),
+        ("SPOTIFY_CLIENT_SECRET".to_string(), false),
+    ]);
 
     // Session setup
     let session_key = env::var("SESSION_KEY")
