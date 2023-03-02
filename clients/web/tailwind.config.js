@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["var(--font-inter)", ...fontFamily.sans],
-      }
+      },
     },
   },
   future: ["hoverOnlyWhenSupported", "respectDefaultRingColorOpacity"],

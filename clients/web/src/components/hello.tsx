@@ -13,12 +13,12 @@ const providers = {
 export default () => (
   <>
     {document.cookie.includes("id") ? (
-      <h1 className="font-black text-6xl dark:text-zinc-100 text-zinc-900">
+      <h1 className="text-6xl font-black text-zinc-900 dark:text-zinc-100">
         Welcome to Logos!
       </h1>
     ) : (
       <>
-        <h1 className="font-black text-6xl dark:text-zinc-100 text-zinc-900">
+        <h1 className="text-6xl font-black text-zinc-900 dark:text-zinc-100">
           Sign in:
         </h1>
         <div className="flex flex-row gap-4">
@@ -27,7 +27,7 @@ export default () => (
               key={provider}
               href={`http://127.0.0.1:8081/api/v1/oauth/create?provider=${provider}`}
               className={cn(
-                "flex h-12 w-12 items-center shadow-2xl hover:opacity-50 duration-150",
+                "flex h-12 w-12 items-center shadow-2xl duration-150 hover:opacity-50",
                 color
               )}
             >

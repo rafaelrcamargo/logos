@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main
       className={clsx(
-        "font-sans w-screen min-h-screen flex flex-col gap-8 items-center justify-center dark:bg-zinc-900 bg-zinc-100",
+        "flex min-h-screen w-screen flex-col items-center justify-center gap-8 bg-zinc-100 font-sans dark:bg-zinc-900",
         inter.variable
       )}
     >
