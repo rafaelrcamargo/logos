@@ -20,6 +20,39 @@ const satoshi = Font({
   display: "swap",
 })
 
+const Header = () => (
+  <header className="fixed inset-0 z-50 flex h-16 w-screen flex-row items-center justify-between border-b border-zinc-300/30 px-24 backdrop-blur-md backdrop-saturate-150">
+    <a href="/" className="text-2xl font-black">
+      <h1>Logos</h1>
+    </a>
+    <nav className="center gap-4">
+      <a href="#" className="text-lg">
+        Home
+      </a>
+      <a href="#" className="text-lg">
+        About
+      </a>
+      <a href="#" className="text-lg">
+        Contact
+      </a>
+
+      {/*
+        TODO: Add a sign in button that redirects to the auth page and then back to the home page.
+        Using a client component and a loading fallback.
+
+        https://beta.nextjs.org/docs/routing/linking-and-navigating
+      */}
+
+      <a
+        href={"/auth"}
+        className="center h-10 rounded-full bg-zinc-900 px-6 text-lg text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+      >
+        Sign in
+      </a>
+    </nav>
+  </header>
+)
+
 const RootLayout: FC<PropsWithChildren> = ({ children }) => {
   return (
     <html
@@ -30,7 +63,8 @@ const RootLayout: FC<PropsWithChildren> = ({ children }) => {
         satoshi.variable
       )}
     >
-      <body className="center m-auto min-h-screen w-screen max-w-4xl font-sans antialiased">
+      <body className="center m-auto min-h-screen w-screen font-sans antialiased">
+        <Header />
         {children}
       </body>
     </html>
