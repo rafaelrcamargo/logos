@@ -1,5 +1,4 @@
 use colored::*;
-use dotenv::vars;
 use std::io::Write;
 
 // ? Logging macros
@@ -42,31 +41,5 @@ pub fn highlight_level<T: std::fmt::Display>(
         "DEBUG" => text.to_string().blue(),
         "TRACE" => text.to_string().dimmed(),
         _ => text.to_string().normal()
-    }
-}
-
-// ? Environment utils
-pub fn check_env(mut required: Vec<(String, bool)>) {
-    let env = vars().collect::<Vec<(String, String)>>();
-
-    env.iter().for_each(|(key, _)| {
-        required
-            .iter_mut()
-            .for_each(|(env, found)| {
-                if key == env {
-                    *found = true;
-                }
-            });
-    });
-
-    if required.iter().any(|(_, found)| !found) {
-        let missing = required
-            .iter()
-            .filter(|(_, found)| !found)
-            .map(|(env, _)| env.to_string())
-            .collect::<Vec<String>>()
-            .join(", ");
-
-        panic!("Missing environment variables: {missing}");
     }
 }

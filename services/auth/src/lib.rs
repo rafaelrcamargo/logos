@@ -2,14 +2,13 @@
 
 use actix_session::Session;
 use actix_web::web::Data;
-use anyhow::{anyhow, Result};
+use dotenv_codegen::dotenv;
 use oauth2::{
     basic::BasicClient, AuthUrl, AuthorizationRequest, ClientId, ClientSecret,
     CsrfToken, RedirectUrl, Scope, TokenUrl
 };
 use reqwest::{Client as HTTPClient, Url};
 use serde_json::{Map, Value};
-use std::env;
 
 pub enum Provider {
     Discord,
@@ -17,12 +16,57 @@ pub enum Provider {
     Spotify
 }
 impl Provider {
-    pub fn from(provider: &str) -> Result<Provider> {
+    pub fn from(provider: &str) -> Result<Provider, &str> {
         match provider {
             "discord" => Ok(Provider::Discord),
             "github" => Ok(Provider::Github),
             "spotify" => Ok(Provider::Spotify),
-            _ => Err(anyhow!("Invalid provider"))
+            _ => Err("Invalid provider")
+        }
+    }
+    pub fn get_env(&self) -> (&str, &str) {
+        match self {
+            Provider::Github => (
+                dotenv!("GITHUB_CLIENT_ID", "Error getting the GITHUB_CLIENT_ID environment variable."),
+                dotenv!("GITHUB_CLIENT_SECRET", "Error getting the GITHUB_CLIENT_SECRET environment variable."),
+            ),
+            Provider::Discord => (
+                dotenv!("DISCORD_CLIENT_ID", "Error getting the DISCORD_CLIENT_ID environment variable."),
+                dotenv!("DISCORD_CLIENT_SECRET", "Error getting the DISCORD_CLIENT_SECRET environment variable."),
+            ),
+            Provider::Spotify => (
+                dotenv!("SPOTIFY_CLIENT_ID", "Error getting the SPOTIFY_CLIENT_ID environment variable."),
+                dotenv!("SPOTIFY_CLIENT_SECRET", "Error getting the SPOTIFY_CLIENT_SECRET environment variable."),
+            )
+        }
+    }
+    pub fn get_oauth_url(&self) -> (&str, &str) {
+        match self {
+            Provider::Github => (
+                "https://github.com/login/oauth/authorize",
+                "https://github.com/login/oauth/access_token"
+            ),
+            Provider::Discord => (
+                "https://discord.com/api/oauth2/authorize",
+                "https://discord.com/api/oauth2/token"
+            ),
+            Provider::Spotify => (
+                "https://accounts.spotify.com/authorize",
+                "https://accounts.spotify.com/api/token"
+            )
+        }
+    }
+    pub fn get_user_url(&self) -> Url {
+        match self {
+            Provider::Github => {
+                Url::parse("https://api.github.com/user").unwrap()
+            }
+            Provider::Discord => {
+                Url::parse("https://discord.com/api/v10/users/@me").unwrap()
+            }
+            Provider::Spotify => {
+                Url::parse("https://api.spotify.com/v1/me").unwrap()
+            }
         }
     }
 }
@@ -36,57 +80,17 @@ impl ToString for Provider {
     }
 }
 
-#[non_exhaustive]
-pub struct Api;
-impl Api {
-    pub fn oauth(provider: &Provider) -> (String, String) {
-        match provider {
-            Provider::Github => (
-                String::from("https://github.com/login/oauth/authorize"),
-                String::from("https://github.com/login/oauth/access_token")
-            ),
-            Provider::Discord => (
-                String::from("https://discord.com/api/oauth2/authorize"),
-                String::from("https://discord.com/api/oauth2/token")
-            ),
-            Provider::Spotify => (
-                String::from("https://accounts.spotify.com/authorize"),
-                String::from("https://accounts.spotify.com/api/token")
-            )
-        }
-    }
-    pub fn user(provider: &Provider) -> Url {
-        match provider {
-            Provider::Github => {
-                Url::parse("https://api.github.com/user").unwrap()
-            }
-            Provider::Discord => {
-                Url::parse("https://discord.com/api/v10/users/@me").unwrap()
-            }
-            Provider::Spotify => {
-                Url::parse("https://api.spotify.com/v1/me").unwrap()
-            }
-        }
-    }
-}
-
 pub struct OAuthClient {}
 impl OAuthClient {
     pub fn from(provider: &Provider) -> BasicClient {
-        let (auth_url, token_url) = Api::oauth(provider);
-        let provider = provider.to_string();
+        let (auth_url, token_url) = provider.get_oauth_url();
+        let (client_id, client_secret) = provider.get_env();
 
         BasicClient::new(
-            ClientId::new(
-                env::var(format!("{}_CLIENT_ID", provider.to_uppercase()))
-                    .unwrap()
-            ),
-            Some(ClientSecret::new(
-                env::var(format!("{}_CLIENT_SECRET", provider.to_uppercase()))
-                    .unwrap()
-            )),
-            AuthUrl::new(auth_url).unwrap(),
-            Some(TokenUrl::new(token_url).unwrap())
+            ClientId::new(client_id.to_owned()),
+            Some(ClientSecret::new(client_secret.to_owned())),
+            AuthUrl::new(auth_url.to_owned()).unwrap(),
+            Some(TokenUrl::new(token_url.to_owned()).unwrap())
         )
         .set_redirect_uri(
             RedirectUrl::new(
@@ -123,19 +127,19 @@ pub async fn get_user(
     http: Data<HTTPClient>,
     provider: &Provider,
     token: &String
-) -> Result<Value> {
+) -> Result<Value, ()> {
     match http
-        .get(Api::user(provider))
+        .get(provider.get_user_url())
         .header("Authorization", format!("Bearer {token}"))
         .send()
         .await
     {
-        Err(_) => Err(anyhow!("Failed to get user data")),
+        Err(_) => Err(()),
         Ok(response) => match response
             .json::<serde_json::Value>()
             .await
         {
-            Err(_) => Err(anyhow!("Failed to parse user data")),
+            Err(_) => Err(()),
             Ok(user) => {
                 println!("{user:?}");
                 Ok(user)
@@ -147,7 +151,7 @@ pub async fn save_user(
     http: Data<HTTPClient>,
     provider: &Provider,
     user: &Map<String, Value>
-) -> Result<()> {
+) -> Result<(), ()> {
     match http
         .post(&format!(
             "https://4006c06b-d8de-4361-8e53-6f7f2b431d32.mock.pstmn.io/api/v1/user?provider={}",
@@ -157,7 +161,7 @@ pub async fn save_user(
         .send()
         .await
     {
-        Err(_) => Err(anyhow!("Failed to get user data")),
+        Err(_) => Err(()),
         Ok(_) => Ok(())
     }
 }

@@ -30,7 +30,7 @@ const RootLayout: FC<PropsWithChildren> = ({ children }) => {
         satoshi.variable
       )}
     >
-      <body className="center min-w-screen m-auto min-h-screen max-w-4xl font-sans antialiased">
+      <body className="center m-auto min-h-screen w-screen max-w-4xl font-sans antialiased">
         {children}
       </body>
     </html>
