@@ -13,7 +13,7 @@ use redis::Client as RedisClient;
 use reqwest::{Client as HTTPClient, Url};
 use serde::Deserialize;
 use serde_json::Value;
-use utils::{error, info, warn};
+use utils::{error, warn};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -30,23 +30,20 @@ pub async fn resolve(
     session: Session
 ) -> impl Responder {
     let provider = match session.get::<String>("provider") {
-        Ok(Some(provider)) => {
-            info!("Provider: {provider:?}");
-            match Provider::from(&provider) {
-                Ok(provider) => provider,
-                Err(e) => {
-                    warn!("{}", format!("Bad Request: {e}"));
-                    return HttpResponse::BadRequest().finish();
-                }
-            }
+        Err(_) => {
+            error!("Error getting _ from session");
+            return HttpResponse::InternalServerError().finish();
         }
         Ok(None) => {
             warn!("Bad Request: No provider found in session");
             return HttpResponse::BadRequest().finish();
         }
-        Err(_) => {
-            error!("Error getting _ from session");
-            return HttpResponse::InternalServerError().finish();
+        Ok(Some(provider)) => match Provider::from(&provider) {
+            Err(e) => {
+                warn!("Bad Request: {e:?}");
+                return HttpResponse::BadRequest().finish();
+            }
+            Ok(provider) => provider
         }
     };
 
@@ -56,8 +53,8 @@ pub async fn resolve(
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            error!("Error getting Redis connection");
+        Err(e) => {
+            error!("Error getting Redis connection: {e:?}");
             return HttpResponse::ServiceUnavailable().finish();
         }
         Ok(conn) => conn
@@ -67,8 +64,8 @@ pub async fn resolve(
         .query_async::<_, String>(&mut conn)
         .await
     {
-        Err(_) => {
-            error!("Error getting Redis key");
+        Err(e) => {
+            error!("Error getting Redis key: {e:?}");
             return HttpResponse::InternalServerError().finish();
         }
         Ok(pkce) => PkceCodeVerifier::new(pkce)
@@ -80,8 +77,8 @@ pub async fn resolve(
         .request_async(async_http_client)
         .await
     {
-        Err(_) => {
-            error!("Error retrieving USER token from OAuth provider");
+        Err(e) => {
+            error!("Error retrieving USER token from OAuth provider: {e:?}");
             return HttpResponse::Forbidden().finish();
         }
         Ok(token_result) => token_result
@@ -95,20 +92,23 @@ pub async fn resolve(
         match get_user(&http, &provider, token_result.access_token().secret())
             .await
         {
-            Err(_) => {
-                error!("Error getting USER data from OAuth provider");
+            Err(e) => {
+                error!("Error getting USER data from OAuth provider: {e:?}");
                 return HttpResponse::InternalServerError().finish();
             }
             Ok(user) => match user.as_object() {
-                Some(user) => {
-                    let mut user = user.to_owned();
-                    user.insert("id".to_string(), Value::String(id.to_owned()));
-
-                    user
-                }
                 None => {
                     error!("Error parsing USER data");
                     return HttpResponse::InternalServerError().finish();
+                }
+                Some(user) => {
+                    let mut user = user.to_owned();
+                    user.insert(
+                        "id".to_string(),
+                        Value::String(id.to_string())
+                    );
+
+                    user
                 }
             }
         };
@@ -122,8 +122,8 @@ pub async fn resolve(
     }
 
     match update_user(http, &provider, &user).await {
-        Err(_) => {
-            error!("Error saving USER data");
+        Err(e) => {
+            error!("Error saving USER data: {e:?}");
             HttpResponse::InternalServerError().finish()
         }
         Ok(_) => {

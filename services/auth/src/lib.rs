@@ -1,6 +1,3 @@
-#![feature(is_some_and)]
-
-use actix_session::Session;
 use actix_web::web::Data;
 use dotenv_codegen::dotenv;
 use oauth2::{
@@ -104,20 +101,19 @@ impl OAuthClient {
         provider: &'a Provider,
         client: &'a BasicClient
     ) -> AuthorizationRequest<'a> {
-        match provider.to_string().as_str() {
-            "github" => client
+        match provider {
+            Provider::Github => client
                 .authorize_url(CsrfToken::new_random)
                 .add_scope(Scope::new("read:user".to_string()))
                 .add_scope(Scope::new("user:email".to_string())),
-            "discord" => client
+            Provider::Discord => client
                 .authorize_url(CsrfToken::new_random)
                 .add_scope(Scope::new("email".to_string()))
                 .add_scope(Scope::new("identify".to_string())),
-            "spotify" => client
+            Provider::Spotify => client
                 .authorize_url(CsrfToken::new_random)
                 .add_scope(Scope::new("user-read-email".to_string()))
-                .add_scope(Scope::new("user-read-private".to_string())),
-            _ => panic!("How???")
+                .add_scope(Scope::new("user-read-private".to_string()))
         }
     }
 }
@@ -127,23 +123,18 @@ pub async fn get_user(
     http: &Data<HTTPClient>,
     provider: &Provider,
     token: &String
-) -> Result<Value, ()> {
+) -> Result<Value, reqwest::Error> {
     match http
         .get(provider.get_user_url())
         .header("Authorization", format!("Bearer {token}"))
         .send()
         .await
     {
-        Err(_) => Err(()),
-        Ok(response) => match response
-            .json::<serde_json::Value>()
-            .await
-        {
-            Err(_) => Err(()),
-            Ok(user) => {
-                println!("{user:?}");
-                Ok(user)
-            }
+        Err(e) => Err(e),
+        Ok(response) => {
+            response
+                .json::<serde_json::Value>()
+                .await
         }
     }
 }
@@ -151,26 +142,12 @@ pub async fn update_user(
     http: Data<HTTPClient>,
     provider: &Provider,
     user: &Map<String, Value>
-) -> Result<(), ()> {
-    match http
-        .post(&format!(
-            "http://127.0.0.1:8082/api/v1/user?provider={}",
-            provider.to_string()
-        ))
-        .json::<Map<String, Value>>(user)
-        .send()
-        .await
-    {
-        Err(_) => Err(()),
-        Ok(_) => Ok(())
-    }
-}
-
-// Session
-pub fn is_valid_for(session: &Session, provider: String) -> bool {
-    if let Ok(og) = session.get::<String>("provider") {
-        og.is_some_and(|x| x == provider)
-    } else {
-        false
-    }
+) -> Result<reqwest::Response, reqwest::Error> {
+    http.post(&format!(
+        "http://127.0.0.1:8082/api/v1/user?provider={}",
+        provider.to_string()
+    ))
+    .json::<Map<String, Value>>(user)
+    .send()
+    .await
 }

@@ -9,7 +9,7 @@ use actix_web::{
     App, HttpServer
 };
 
-use redis::{Client as RedisClient};
+use redis::Client as RedisClient;
 use reqwest::Client as HTTPClient;
 
 use utils::*;
@@ -40,7 +40,10 @@ async fn main() -> std::io::Result<()> {
     logger_setup(); // Setup logger
 
     // HTTP client setup
-    let http = HTTPClient::default();
+    let http = HTTPClient::builder()
+        .user_agent("Logos v1")
+        .build()
+        .expect("Error creating the HTTP client.");
 
     // Redis setup
     let redis = RedisClient::open(format!("redis://{REDIS_URL}/"))

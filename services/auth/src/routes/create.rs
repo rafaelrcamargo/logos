@@ -4,11 +4,11 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse, Responder
 };
-use auth::{is_valid_for, OAuthClient, Provider};
+use auth::{OAuthClient, Provider};
 use oauth2::PkceCodeChallenge;
 use redis::Client as RedisClient;
 use serde::Deserialize;
-use utils::{error, info, warn};
+use utils::{error, warn};
 
 #[derive(Deserialize)]
 pub struct Create {
@@ -21,23 +21,19 @@ pub async fn create(
     redis: Data<RedisClient>,
     session: Session
 ) -> impl Responder {
-    let provider = match Provider::from(&query.provider) {
-        Ok(provider) => {
-            info!("Provider: {}", provider.to_string());
-            provider
-        }
-        Err(e) => {
-            warn!("{}", format!("Bad Request: {e}"));
-            return HttpResponse::BadRequest().finish();
-        }
-    };
-
-    if is_valid_for(&session, provider.to_string()) {
-        info!("Redirecting to /");
+    if is_valid_for(&session) {
         return HttpResponse::TemporaryRedirect()
             .append_header(("Location", "http://127.0.0.1:3000"))
             .finish();
     }
+
+    let provider = match Provider::from(&query.provider) {
+        Err(e) => {
+            warn!("Bad Request: {e:?}");
+            return HttpResponse::BadRequest().finish();
+        }
+        Ok(provider) => provider
+    };
 
     if session
         .insert("provider", provider.to_string())
@@ -51,8 +47,8 @@ pub async fn create(
         .get_tokio_connection_manager()
         .await
     {
-        Err(_) => {
-            error!("Error getting Redis connection");
+        Err(e) => {
+            error!("Error getting Redis connection: {e:?}");
             return HttpResponse::ServiceUnavailable().finish();
         }
         Ok(conn) => conn
@@ -83,4 +79,13 @@ pub async fn create(
     HttpResponse::TemporaryRedirect()
         .append_header(("Location", auth_url.to_string()))
         .finish()
+}
+
+// Session skipping
+pub fn is_valid_for(session: &Session) -> bool {
+    if let Ok(id) = session.get::<String>("id") {
+        id.is_some()
+    } else {
+        false
+    }
 }
