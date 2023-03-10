@@ -1,14 +1,19 @@
 [package]
 edition = "2021"
-name = "core"
+name = "user"
 version = "0.1.0"
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
-name = "logos-core"
+name = "logos-user"
 path = "src/main.rs"
 
 [dependencies]
 actix-cors = "0.6.4"
 actix-web = "4.3.0"
+dotenv_codegen = "0.15.0"
 serde = {version = "1.0.152", features = ["derive"]}
+serde_json = "1.0.94"
 utils = {path = "../utils"}

@@ -1,4 +1,4 @@
-mod oauth;
+mod routes;
 
 use actix_cors::Cors;
 use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
@@ -30,8 +30,8 @@ const REDIS_URL: &str = dotenv!(
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/api/v1/oauth")
-            .service(oauth::create)
-            .service(oauth::resolve)
+            .service(routes::create)
+            .service(routes::resolve)
     );
 }
 

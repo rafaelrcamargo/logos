@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-  "./services/core",
   "./services/auth",
+  "./services/user",
   "./services/utils",
 ]

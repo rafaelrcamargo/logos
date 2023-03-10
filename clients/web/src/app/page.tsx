@@ -1,5 +1,5 @@
 export default () => (
-    <div className="prose prose-zinc my-40 px-8 dark:prose-invert lg:prose-xl">
+    <div className="prose prose-neutral my-40 px-8 dark:prose-invert lg:prose-xl">
       <h1>Welcome to Logos!</h1>
       <p>
         Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptas dicta

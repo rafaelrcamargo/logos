@@ -11,13 +11,13 @@ use serde::Deserialize;
 use utils::{error, info, warn};
 
 #[derive(Deserialize)]
-pub struct OAuthCreate {
+pub struct Create {
     provider: String
 }
 
 #[get("/create")]
 pub async fn create(
-    query: Query<OAuthCreate>,
+    query: Query<Create>,
     redis: Data<RedisClient>,
     session: Session
 ) -> impl Responder {

@@ -87,10 +87,10 @@ impl OAuthClient {
         let (client_id, client_secret) = provider.get_env();
 
         BasicClient::new(
-            ClientId::new(client_id.to_owned()),
-            Some(ClientSecret::new(client_secret.to_owned())),
-            AuthUrl::new(auth_url.to_owned()).unwrap(),
-            Some(TokenUrl::new(token_url.to_owned()).unwrap())
+            ClientId::new(client_id.to_string()),
+            Some(ClientSecret::new(client_secret.to_string())),
+            AuthUrl::new(auth_url.to_string()).unwrap(),
+            Some(TokenUrl::new(token_url.to_string()).unwrap())
         )
         .set_redirect_uri(
             RedirectUrl::new(
@@ -124,7 +124,7 @@ impl OAuthClient {
 
 // User
 pub async fn get_user(
-    http: Data<HTTPClient>,
+    http: &Data<HTTPClient>,
     provider: &Provider,
     token: &String
 ) -> Result<Value, ()> {
@@ -147,14 +147,14 @@ pub async fn get_user(
         }
     }
 }
-pub async fn save_user(
+pub async fn update_user(
     http: Data<HTTPClient>,
     provider: &Provider,
     user: &Map<String, Value>
 ) -> Result<(), ()> {
     match http
         .post(&format!(
-            "https://4006c06b-d8de-4361-8e53-6f7f2b431d32.mock.pstmn.io/api/v1/user?provider={}",
+            "http://127.0.0.1:8082/api/v1/user?provider={}",
             provider.to_string()
         ))
         .json::<Map<String, Value>>(user)

@@ -4,26 +4,27 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse, Responder
 };
-use auth::{get_user, save_user, OAuthClient, Provider};
+use auth::{get_user, update_user, OAuthClient, Provider};
 use oauth2::{
     reqwest::async_http_client, AuthorizationCode, PkceCodeVerifier,
     TokenResponse
 };
 use redis::Client as RedisClient;
-use reqwest::Client as HTTPClient;
+use reqwest::{Client as HTTPClient, Url};
 use serde::Deserialize;
+use serde_json::Value;
 use utils::{error, info, warn};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
-pub struct OAuthResolve {
+pub struct Resolve {
     code: String,
     state: String
 }
 
 #[get("/resolve")]
 pub async fn resolve(
-    query: Query<OAuthResolve>,
+    query: Query<Resolve>,
     redis: Data<RedisClient>,
     http: Data<HTTPClient>,
     session: Session
@@ -90,42 +91,51 @@ pub async fn resolve(
     let id = Uuid::new_v4().to_string();
 
     // Get the user data
-    let user = match get_user(
-        http.clone(),
-        &provider,
-        token_result.access_token().secret()
-    )
-    .await
-    {
-        Err(_) => {
-            error!("Error getting USER data from OAuth provider");
-            return HttpResponse::InternalServerError().finish();
-        }
-        Ok(user) => match user.as_object() {
-            Some(user) => {
-                let mut user = user.clone();
-                user.insert("id".to_string(), id.clone().into());
-                user
-            }
-            None => {
-                error!("Error parsing USER data");
+    let user =
+        match get_user(&http, &provider, token_result.access_token().secret())
+            .await
+        {
+            Err(_) => {
+                error!("Error getting USER data from OAuth provider");
                 return HttpResponse::InternalServerError().finish();
             }
-        }
-    };
+            Ok(user) => match user.as_object() {
+                Some(user) => {
+                    let mut user = user.to_owned();
+                    user.insert("id".to_string(), Value::String(id.to_owned()));
 
-    if session.insert("id", id).is_err() {
+                    user
+                }
+                None => {
+                    error!("Error parsing USER data");
+                    return HttpResponse::InternalServerError().finish();
+                }
+            }
+        };
+
+    if session
+        .insert("id", id.to_string())
+        .is_err()
+    {
         error!("Error creating USER session");
         return HttpResponse::InternalServerError().finish();
     }
 
-    match save_user(http, &provider, &user).await {
+    match update_user(http, &provider, &user).await {
         Err(_) => {
             error!("Error saving USER data");
             HttpResponse::InternalServerError().finish()
         }
-        Ok(_) => HttpResponse::TemporaryRedirect()
-            .append_header(("Location", "http://127.0.0.1:3000"))
-            .finish()
+        Ok(_) => {
+            let mut url = Url::parse("http://127.0.0.1:3000").unwrap();
+            let mut query = String::from("id=");
+            query.push_str(&id);
+
+            url.set_query(Some(query.as_str()));
+
+            HttpResponse::TemporaryRedirect()
+                .append_header(("Location", url.to_string()))
+                .finish()
+        }
     }
 }

@@ -23,27 +23,23 @@ A generalized flow of the system.
 
 ```mermaid
 flowchart TB
-    Web --> Auth
+    Client --> Auth
 
     %% Auth flow
-    Auth <-.-> A(( ))
-    A(( )) <-. State .-> Provider
-    A(( )) <-. CSRF .-> Temp[(Temp)]
-    Auth -- Session --> Web
-    Auth -- User --> Core
-    Core --> Users[(Users)]
+    Auth --> A(( ))
+    A(( )) -. State .-> Provider
+    A(( )) -. CSRF .-> Temp[(Temp)]
+    Auth -- User --> Users[(Users)]
 
-    %% Web flow
-    Core <-. User .-> Web
-    Core <-. Posts .-> Web
-    Core <-. Users .-> Web
+    %% User flow
+
+    %% Posts flow
+    Client -- Post --> Posts_queue[(Posts queue)]
+    Posts_queue[(Posts queue)] -- Post --> Posts[(Posts)]
+    Posts_queue[(Posts queue)] -.- Posted .-> Users[(Users)]
 
     %% Feed flow
-    Core -. User .-> Feed
-    Feed --> RabbitMQ
-    RabbitMQ --> a[Users Feed]
-    RabbitMQ --> a[Users Feed]
-    RabbitMQ --> a[Users Feed]
+    Client -- Feed --> Feeds_queue[(Feeds queue)]
 ```
 
 ## Data
@@ -78,21 +74,20 @@ Those are the platforms I'm planning to support.
 
 And these are the main services I'm planning to use.
 
-- Core
-
-  - [Rust](https://www.rust-lang.org/)
-  - [Actix](https://actix.rs/)
-
 - Auth
-
-  - [Rust](https://www.rust-lang.org/)
-  - [Actix](https://actix.rs/)
-  - [Redis](https://redis.io/)
   - [OAuth 2](https://oauth.net/2/)
     - Providers: GitHub, Discord, Spotify.
-  - [MongoDB](https://www.mongodb.com/) OR [Neo4j](https://neo4j.com/) (or other graph DB)
+  - [Redis](https://redis.io/)
+    - For storing temporary data.
+
+- User
+  - [Neo4j](https://neo4j.com/)
+    - For storing user data and provide user relations.
+
+- Posts
+  - [MeiliSearch](https://www.meilisearch.com/)
+    - For full-text search + storing posts data.
 
 - Feed
-  - [Rust](https://www.rust-lang.org/)
-  - [Actix](https://actix.rs/)
   - [RabbitMQ](https://www.rabbitmq.com/)
+    - For queueing posts on user feeds.
