@@ -1,7 +1,15 @@
-use actix_web::{post, web::Query, HttpResponse, Responder};
+use std::sync::Arc;
+
+use actix_web::{
+    post,
+    web::{Data, Query},
+    HttpResponse, Responder
+};
+use neo4rs::{query as graph_query, Graph};
 use serde::Deserialize;
 use serde_json::Value;
 use user::Provider;
+use utils::error;
 
 #[derive(Deserialize)]
 pub struct Update {
@@ -9,7 +17,11 @@ pub struct Update {
 }
 
 #[post("/user")]
-pub async fn update(query: Query<Update>, body: String) -> impl Responder {
+pub async fn update(
+    query: Query<Update>,
+    body: String,
+    graph: Data<Arc<Graph>>
+) -> impl Responder {
     let provider = match Provider::from(&query.provider) {
         Ok(provider) => provider,
         Err(_) => return HttpResponse::BadRequest().finish()
@@ -18,10 +30,28 @@ pub async fn update(query: Query<Update>, body: String) -> impl Responder {
     let user = User::from(provider, body);
     println!("{user:?}");
 
-    HttpResponse::Ok().finish()
+    match graph
+        .run(
+            graph_query("CREATE (u:User {id: $id, email: $email, locale: $locale, mfa_enabled: $mfa_enabled, username: $username, name: $name, verified: $verified, image: $image, misc: $misc}) RETURN u")
+                .param("id", user.id.unwrap_or_default())
+                .param("email", user.email.unwrap_or_default())
+                .param("locale", user.locale.unwrap_or_default())
+                .param("mfa_enabled", user.mfa_enabled.unwrap_or_default().to_string())
+                .param("username", user.username.unwrap_or_default())
+                .param("name", user.name.unwrap_or_default())
+                .param("verified", user.verified.unwrap_or_default().to_string())
+                .param("image", user.image.unwrap_or_default())
+                .param("misc", user.misc.unwrap_or_default())
+        )
+        .await {
+            Ok(_) => HttpResponse::Ok().finish(),
+            Err(e) => {
+                error!("{:?}", e);
+                HttpResponse::InternalServerError().finish()
+            }
+        }
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 struct User {
     id: Option<String>,

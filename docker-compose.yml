@@ -1,0 +1,17 @@
+services:
+  redis: # Used for the OAuth2 server
+    image: redis:latest
+    container_name: logos-auth
+    restart: always
+    ports:
+      - 6379:6379
+
+  neo4j: # Used in the user service
+    image: neo4j:4.4.2 # for now the rust driver is not compatible with neo4j 5.x
+    container_name: logos-user
+    restart: always
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
