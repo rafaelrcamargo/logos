@@ -7,7 +7,7 @@ use actix_web::{
 };
 use neo4rs::{query as graph_query, Graph};
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use user::Provider;
 use utils::error;
 
@@ -32,42 +32,43 @@ pub async fn update(
 
     match graph
         .run(
-            graph_query("CREATE (u:User {id: $id, email: $email, locale: $locale, mfa_enabled: $mfa_enabled, username: $username, name: $name, verified: $verified, image: $image, misc: $misc}) RETURN u")
-                .param("id", user.id.unwrap_or_default())
-                .param("email", user.email.unwrap_or_default())
-                .param("locale", user.locale.unwrap_or_default())
-                .param("mfa_enabled", user.mfa_enabled.unwrap_or_default().to_string())
-                .param("username", user.username.unwrap_or_default())
-                .param("name", user.name.unwrap_or_default())
-                .param("verified", user.verified.unwrap_or_default().to_string())
-                .param("image", user.image.unwrap_or_default())
-                .param("misc", user.misc.unwrap_or_default())
+            graph_query("MERGE (u: User { email: $email }) SET u.id = $id, u.email = $email, u.locale = $locale, u.mfa_enabled = $mfa_enabled, u.username = $username, u.name = $name, u.verified = $verified, u.image = $image, u.misc = $misc")
+                .param("id", user.id)
+                .param("email", user.email)
+                .param("locale", user.locale)
+                .param("mfa_enabled", user.mfa_enabled)
+                .param("username", user.username)
+                .param("name", user.name)
+                .param("verified", user.verified)
+                .param("image", user.image)
+                .param("misc", user.misc)
         )
-        .await {
-            Ok(_) => HttpResponse::Ok().finish(),
-            Err(e) => {
-                error!("{:?}", e);
-                HttpResponse::InternalServerError().finish()
-            }
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => {
+            error!("{:?}", e);
+            HttpResponse::InternalServerError().finish()
         }
+    }
 }
 
 #[derive(Debug)]
 struct User {
-    id: Option<String>,
-    email: Option<String>,
-    locale: Option<String>,
-    mfa_enabled: Option<bool>,
-    username: Option<String>,
-    name: Option<String>,
-    verified: Option<bool>,
-    image: Option<String>,
-    misc: Option<String>
+    id: String,
+    email: String,
+    locale: String,
+    mfa_enabled: String,
+    username: String,
+    name: String,
+    verified: String,
+    image: String,
+    misc: String
 }
 
 impl User {
     pub fn from(provider: Provider, body: String) -> User {
-        let json: Value = serde_json::from_str(&body).unwrap();
+        let json = json!(body);
 
         match provider {
             Provider::Discord => User::from_discord(&json),
@@ -77,52 +78,44 @@ impl User {
     }
     fn from_discord(json: &Value) -> User {
         User {
-            id: Some(json["id"].to_string()),
-            email: to_string_or_none(&json["email"]),
-            locale: to_string_or_none(&json["locale"]),
-            mfa_enabled: json["mfa_enabled"].as_bool(),
-            username: to_string_or_none(&json["username"]),
-            name: to_string_or_none(&json["display_name"]),
-            verified: json["verified"].as_bool(),
-            image: Some(format!(
+            id: json["id"].to_string(),
+            email: json["email"].to_string(),
+            locale: json["locale"].to_string(),
+            mfa_enabled: json["mfa_enabled"].to_string(),
+            username: json["username"].to_string(),
+            name: json["display_name"].to_string(),
+            verified: json["verified"].to_string(),
+            image: format!(
                 "https://cdn.discordapp.com/avatars/{}/{}.png",
-                json["id"], json["avatar"]
-            )),
-            misc: Some(json.to_string())
+                json["id"], json["avatar"],
+            ),
+            misc: json.to_string()
         }
     }
     fn from_github(json: &Value) -> User {
         User {
-            id: Some(json["id"].to_string()),
-            email: to_string_or_none(&json["email"]),
-            locale: None,
-            mfa_enabled: json["two_factor_authentication"].as_bool(),
-            username: to_string_or_none(&json["login"]),
-            name: to_string_or_none(&json["name"]),
-            verified: None,
-            image: to_string_or_none(&json["avatar_url"]),
-            misc: Some(json.to_string())
+            id: json["id"].to_string(),
+            email: json["email"].to_string(),
+            locale: String::from(""),
+            mfa_enabled: json["two_factor_authentication"].to_string(),
+            username: json["login"].to_string(),
+            name: json["name"].to_string(),
+            verified: String::from(""),
+            image: json["avatar_url"].to_string(),
+            misc: json.to_string()
         }
     }
     fn from_spotify(json: &Value) -> User {
         User {
-            id: Some(json["id"].to_string()),
-            email: to_string_or_none(&json["email"]),
-            locale: None,
-            mfa_enabled: None,
-            username: to_string_or_none(&json["id"]),
-            name: to_string_or_none(&json["display_name"]),
-            verified: None,
-            image: to_string_or_none(&json["images"][0]["url"]),
-            misc: Some(json.to_string())
+            id: json["id"].to_string(),
+            email: json["email"].to_string(),
+            locale: String::from(""),
+            mfa_enabled: String::from(""),
+            username: json["display_name"].to_string(),
+            name: json["display_name"].to_string(),
+            verified: String::from(""),
+            image: json["images"][0]["url"].to_string(),
+            misc: json.to_string()
         }
-    }
-}
-
-fn to_string_or_none(value: &Value) -> Option<String> {
-    if value.is_null() {
-        None
-    } else {
-        Some(value.to_string())
     }
 }
