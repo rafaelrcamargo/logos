@@ -1,6 +1,6 @@
 # Logos
 
-> A news feed, a really good one!
+> A news feed, a really good one!(WIP)
 
 ## License
 
