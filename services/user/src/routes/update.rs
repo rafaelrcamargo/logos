@@ -1,14 +1,13 @@
-use std::sync::Arc;
-
 use actix_web::{
-    post,
+    patch,
     web::{Data, Query},
     HttpResponse, Responder
 };
 use neo4rs::{query as graph_query, Graph};
 use serde::Deserialize;
-use serde_json::{json, Value};
-use user::Provider;
+use serde_json::Value;
+use std::sync::Arc;
+use user::{sanitize, Provider};
 use utils::error;
 
 #[derive(Deserialize)]
@@ -16,10 +15,10 @@ pub struct Update {
     provider: String
 }
 
-#[post("/user")]
+#[patch("/user")]
 pub async fn update(
-    query: Query<Update>,
     body: String,
+    query: Query<Update>,
     graph: Data<Arc<Graph>>
 ) -> impl Responder {
     let provider = match Provider::from(&query.provider) {
@@ -28,7 +27,6 @@ pub async fn update(
     };
 
     let user = User::from(provider, body);
-    println!("{user:?}");
 
     match graph
         .run(
@@ -45,11 +43,11 @@ pub async fn update(
         )
         .await
     {
-        Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
             error!("{:?}", e);
             HttpResponse::InternalServerError().finish()
         }
+        Ok(_) => HttpResponse::Ok().finish(),
     }
 }
 
@@ -68,7 +66,7 @@ struct User {
 
 impl User {
     pub fn from(provider: Provider, body: String) -> User {
-        let json = json!(body);
+        let json = serde_json::from_str(&body).unwrap();
 
         match provider {
             Provider::Discord => User::from_discord(&json),
@@ -78,43 +76,46 @@ impl User {
     }
     fn from_discord(json: &Value) -> User {
         User {
-            id: json["id"].to_string(),
-            email: json["email"].to_string(),
-            locale: json["locale"].to_string(),
-            mfa_enabled: json["mfa_enabled"].to_string(),
-            username: json["username"].to_string(),
-            name: json["display_name"].to_string(),
-            verified: json["verified"].to_string(),
+            id: sanitize(json["id"].to_string()),
+            email: sanitize(json["email"].to_string()),
+            locale: sanitize(json["locale"].to_string()),
+            mfa_enabled: sanitize(json["mfa_enabled"].to_string()),
+            username: sanitize(json["username"].to_string()),
+            name: sanitize(json["display_name"].to_string()),
+            verified: sanitize(json["verified"].to_string()),
             image: format!(
                 "https://cdn.discordapp.com/avatars/{}/{}.png",
-                json["id"], json["avatar"],
+                sanitize(json["id"].to_string()),
+                sanitize(json["avatar"].to_string()),
             ),
             misc: json.to_string()
         }
     }
     fn from_github(json: &Value) -> User {
         User {
-            id: json["id"].to_string(),
-            email: json["email"].to_string(),
+            id: sanitize(json["id"].to_string()),
+            email: sanitize(json["email"].to_string()),
             locale: String::from(""),
-            mfa_enabled: json["two_factor_authentication"].to_string(),
-            username: json["login"].to_string(),
-            name: json["name"].to_string(),
+            mfa_enabled: sanitize(
+                json["two_factor_authentication"].to_string()
+            ),
+            username: sanitize(json["login"].to_string()),
+            name: sanitize(json["name"].to_string()),
             verified: String::from(""),
-            image: json["avatar_url"].to_string(),
+            image: sanitize(json["avatar_url"].to_string()),
             misc: json.to_string()
         }
     }
     fn from_spotify(json: &Value) -> User {
         User {
-            id: json["id"].to_string(),
-            email: json["email"].to_string(),
+            id: sanitize(json["id"].to_string()),
+            email: sanitize(json["email"].to_string()),
             locale: String::from(""),
             mfa_enabled: String::from(""),
-            username: json["display_name"].to_string(),
-            name: json["display_name"].to_string(),
+            username: sanitize(json["display_name"].to_string()),
+            name: sanitize(json["display_name"].to_string()),
             verified: String::from(""),
-            image: json["images"][0]["url"].to_string(),
+            image: sanitize(json["images"][0]["url"].to_string()),
             misc: json.to_string()
         }
     }

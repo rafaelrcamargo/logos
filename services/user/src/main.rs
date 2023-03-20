@@ -1,13 +1,13 @@
-use std::sync::Arc;
-
 use actix_cors::Cors;
 use actix_web::{
     middleware::Logger,
     web::{scope, Data, ServiceConfig},
     App, HttpServer
 };
-use neo4rs::Graph;
+use neo4rs::{query, Graph};
+use std::sync::Arc;
 use utils::*;
+
 mod routes;
 use routes::*;
 
@@ -25,7 +25,11 @@ const NEO4J_PASSWORD: &str = dotenv!(
 );
 
 fn app_config(cfg: &mut ServiceConfig) {
-    cfg.service(scope("/api/v1").service(update));
+    cfg.service(
+        scope("/api/v1")
+            .service(read)
+            .service(update)
+    );
 }
 
 #[actix_web::main]
@@ -37,6 +41,15 @@ async fn main() -> std::io::Result<()> {
             .await
             .unwrap()
     );
+
+    if let Err(e) = graph
+        .run(query(
+            "CREATE CONSTRAINT user_id IF NOT EXISTS FOR (user: User) REQUIRE user.id IS UNIQUE"
+        ))
+        .await
+    {
+        error!("Error creating constraint: {:?}", e);
+    }
 
     HttpServer::new(move || {
         let cors = Cors::permissive(); // Setup the CORS config

@@ -23,3 +23,5 @@ impl ToString for Provider {
         }
     }
 }
+
+pub fn sanitize(s: String) -> String { s.replace('\"', "") }

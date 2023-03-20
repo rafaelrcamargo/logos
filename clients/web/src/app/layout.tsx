@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import Font from "next/font/local"
 
 import { cn } from "lib/utils"
+
 import "styles/globals.css"
 
 const sentient = Font({
@@ -20,7 +21,7 @@ const satoshi = Font({
   display: "swap",
 })
 
-const RootLayout: FC<PropsWithChildren> = ({ children }) => {
+const Layout: FC<PropsWithChildren> = ({ children }) => {
   return (
     <html
       lang="en"
@@ -30,14 +31,14 @@ const RootLayout: FC<PropsWithChildren> = ({ children }) => {
         satoshi.variable
       )}
     >
-      <body className="center m-auto min-h-screen w-screen font-sans antialiased">
+      <body className="overflow-x-hidden font-sans antialiased">
         {children}
       </body>
     </html>
   )
 }
 
-export default RootLayout
+export default Layout
 
 const base = {
   title: "Logos - A better news feed",

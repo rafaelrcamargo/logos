@@ -10,25 +10,27 @@ const providers = {
   spotify: [Spotify, "fill-green-500"],
 }
 
-export default () => (
+const Auth = () => (
   <div className="center max-h-screen w-full flex-col overflow-hidden lg:flex-row">
-    <div className="w-full px-12 py-12 lg:w-2/5 lg:px-36">
-      <h1 className="text-5xl">Welcome!</h1>
-      <p className="text-xl">Please sign in with one of our providers:</p>
+    <div className="w-full max-w-lg px-8 pb-16 pt-48">
+      <h1 className="text-3xl md:text-5xl">Welcome!</h1>
+      <p className="text-md md:text-xl">
+        Please sign in with one of our providers:
+      </p>
       <div className="flex flex-col gap-4 pt-8">
         {Object.entries(providers).map(([provider, [Icon, color]]) => (
           <Link
             key={provider}
             href={`http://127.0.0.1:8081/api/v1/oauth/create?provider=${provider}`}
             className={cn(
-              "center gap-4 rounded-lg border border-neutral-300 py-3 capitalize shadow-md shadow-neutral-300/30 duration-150 hover:scale-105 hover:shadow-2xl dark:border-neutral-600/30 dark:shadow-neutral-900",
+              "center gap-4 rounded-lg border border-neutral-300 py-2 capitalize shadow-md shadow-neutral-300/30 duration-150 hover:scale-105 hover:shadow-2xl dark:border-neutral-600/30 dark:shadow-neutral-900 md:py-3",
               color
             )}
           >
-            <span className="center h-8 w-8">
+            <span className="center h-6 w-6 md:h-8 md:w-8">
               <Icon />
             </span>
-            <span className="text-xl">{provider}</span>
+            <span className="text-md md:text-xl">{provider}</span>
           </Link>
         ))}
       </div>
@@ -52,3 +54,5 @@ const Link: Props = ({ href, className, children }) => {
     </a>
   )
 }
+
+export default Auth
