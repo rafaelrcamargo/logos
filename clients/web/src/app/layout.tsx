@@ -1,24 +1,24 @@
 import { FC, PropsWithChildren } from "react"
-
 import type { Metadata } from "next"
 import Font from "next/font/local"
-
 import { cn } from "lib/utils"
 
 import "styles/globals.css"
 
 const sentient = Font({
-  src: "../../public/fonts/Sentient.ttf",
+  src: "../../public/fonts/Sentient.woff2",
   adjustFontFallback: "Times New Roman",
   variable: "--font-serif",
   display: "swap",
+  preload: true,
 })
 
 const satoshi = Font({
-  src: "../../public/fonts/Satoshi.ttf",
+  src: "../../public/fonts/Satoshi.woff2",
   adjustFontFallback: "Arial",
   variable: "--font-sans",
   display: "swap",
+  preload: true,
 })
 
 const Layout: FC<PropsWithChildren> = ({ children }) => {
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     siteName: base.title,
     images: [
       {
-        url: "https://logos.cmrg.dev/og.jpg",
+        url: "/og.webp",
         width: 1920,
         height: 1080,
       },
