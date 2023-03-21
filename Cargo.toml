@@ -1,7 +1,8 @@
 [workspace]
 
 members = [
-  "./services/auth",
-  "./services/user",
+  "./services/gatekeeper",
+  "./services/locksmith",
+  "./services/steward",
   "./services/utils",
 ]

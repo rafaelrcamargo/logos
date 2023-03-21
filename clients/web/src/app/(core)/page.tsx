@@ -1,5 +1,6 @@
-export default () => (
-    <div className="prose prose-neutral my-40 px-8 dark:prose-invert lg:prose-xl">
+const Home = () => {
+  return (
+    <div className="prose prose-neutral my-40 dark:prose-invert lg:prose-lg">
       <h1>Welcome to Logos!</h1>
       <p>
         Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptas dicta
@@ -59,4 +60,7 @@ export default () => (
         provident?
       </p>
     </div>
-)
+  )
+}
+
+export default Home

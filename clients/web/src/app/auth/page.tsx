@@ -1,7 +1,6 @@
 import { FC, PropsWithChildren } from "react"
-import { cn } from "lib/utils"
-
 import { Github, Discord, Spotify } from "components/icons"
+import { cn } from "lib/utils"
 import Image from "next/image"
 
 const providers = {
@@ -10,11 +9,13 @@ const providers = {
   spotify: [Spotify, "fill-green-500"],
 }
 
-export default () => (
+const Auth = () => (
   <div className="center max-h-screen w-full flex-col overflow-hidden lg:flex-row">
-    <div className="w-full px-12 py-12 lg:w-2/5 lg:px-36">
-      <h1 className="text-5xl">Welcome!</h1>
-      <p className="text-xl">Please sign in with one of our providers:</p>
+    <div className="w-full max-w-lg px-8 pb-16 pt-48">
+      <h1 className="text-3xl md:text-5xl">Welcome!</h1>
+      <p className="text-md md:text-xl">
+        Please sign in with one of our providers:
+      </p>
       <div className="flex flex-col gap-4 pt-8">
         {Object.entries(providers).map(([provider, [Icon, color]]) => (
           <Link
@@ -25,10 +26,10 @@ export default () => (
               color
             )}
           >
-            <span className="center h-8 w-8">
+            <span className="center h-6 w-6 md:h-8 md:w-8">
               <Icon />
             </span>
-            <span className="text-xl">{provider}</span>
+            <span className="text-md md:text-xl">{provider}</span>
           </Link>
         ))}
       </div>
@@ -52,3 +53,5 @@ const Link: Props = ({ href, className, children }) => {
     </a>
   )
 }
+
+export default Auth

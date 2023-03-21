@@ -1,26 +1,27 @@
 import { FC, PropsWithChildren } from "react"
-
 import type { Metadata } from "next"
 import Font from "next/font/local"
-
 import { cn } from "lib/utils"
+
 import "styles/globals.css"
 
 const sentient = Font({
-  src: "../../public/fonts/Sentient.ttf",
+  src: "../../public/fonts/Sentient.woff2",
   adjustFontFallback: "Times New Roman",
   variable: "--font-serif",
   display: "swap",
+  preload: true,
 })
 
 const satoshi = Font({
-  src: "../../public/fonts/Satoshi.ttf",
+  src: "../../public/fonts/Satoshi.woff2",
   adjustFontFallback: "Arial",
   variable: "--font-sans",
   display: "swap",
+  preload: true,
 })
 
-const RootLayout: FC<PropsWithChildren> = ({ children }) => {
+const Layout: FC<PropsWithChildren> = ({ children }) => {
   return (
     <html
       lang="en"
@@ -30,14 +31,14 @@ const RootLayout: FC<PropsWithChildren> = ({ children }) => {
         satoshi.variable
       )}
     >
-      <body className="center m-auto min-h-screen w-screen font-sans antialiased">
+      <body className="overflow-x-hidden font-sans antialiased">
         {children}
       </body>
     </html>
   )
 }
 
-export default RootLayout
+export default Layout
 
 const base = {
   title: "Logos - A better news feed",
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
     siteName: base.title,
     images: [
       {
-        url: "https://logos.cmrg.dev/og.jpg",
+        url: "/og.webp",
         width: 1920,
         height: 1080,
       },

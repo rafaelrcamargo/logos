@@ -4,7 +4,7 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse, Responder
 };
-use auth::{OAuthClient, Provider};
+use locksmith::{OAuthClient, Provider};
 use oauth2::PkceCodeChallenge;
 use redis::Client as RedisClient;
 use serde::Deserialize;
@@ -22,6 +22,8 @@ pub async fn create(
     session: Session
 ) -> impl Responder {
     if is_valid_for(&session) {
+        println!("ID: {:?}", session.get::<String>("id"));
+
         return HttpResponse::TemporaryRedirect()
             .append_header(("Location", "http://127.0.0.1:3000"))
             .finish();

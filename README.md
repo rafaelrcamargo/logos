@@ -1,4 +1,4 @@
-# Logos
+# Logos (WIP)
 
 > A news feed, a really good one!
 

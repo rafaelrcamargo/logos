@@ -4,7 +4,7 @@ use actix_web::{
     web::{Data, Query},
     HttpResponse, Responder
 };
-use auth::{get_user, update_user, OAuthClient, Provider};
+use locksmith::{get_user, update_user, OAuthClient, Provider};
 use oauth2::{
     reqwest::async_http_client, AuthorizationCode, PkceCodeVerifier,
     TokenResponse
@@ -119,6 +119,16 @@ pub async fn resolve(
     {
         error!("Error creating USER session");
         return HttpResponse::InternalServerError().finish();
+    }
+
+    match session.insert("role", "user".to_string()) {
+        Err(_) => {
+            error!("Error creating USER session");
+            return HttpResponse::InternalServerError().finish();
+        }
+        Ok(_) => {
+            println!("User session created");
+        }
     }
 
     match update_user(http, &provider, &user).await {

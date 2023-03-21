@@ -143,8 +143,8 @@ pub async fn update_user(
     provider: &Provider,
     user: &Map<String, Value>
 ) -> Result<reqwest::Response, reqwest::Error> {
-    http.post(&format!(
-        "http://127.0.0.1:8082/api/v1/user?provider={}",
+    http.patch(&format!(
+        "http://127.0.0.1:8082/api/v1/me?provider={}",
         provider.to_string()
     ))
     .json::<Map<String, Value>>(user)

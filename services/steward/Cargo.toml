@@ -1,14 +1,10 @@
 [package]
 edition = "2021"
-name = "user"
+name = "steward"
 version = "0.1.0"
 
 [lib]
 path = "src/lib.rs"
-
-[[bin]]
-name = "logos-user"
-path = "src/main.rs"
 
 [dependencies]
 actix-cors = "0.6.4"
