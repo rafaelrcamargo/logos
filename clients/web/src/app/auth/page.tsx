@@ -1,7 +1,6 @@
 import { FC, PropsWithChildren } from "react"
-import { cn } from "lib/utils"
-
 import { Github, Discord, Spotify } from "components/icons"
+import { cn } from "lib/utils"
 import Image from "next/image"
 
 const providers = {

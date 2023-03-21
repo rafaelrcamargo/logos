@@ -9,26 +9,18 @@ use std::sync::Arc;
 use utils::*;
 
 mod routes;
-use routes::*;
 
 #[macro_use]
 extern crate dotenv_codegen;
 
-const NEO4J_URL: &str = dotenv!(
-    "NEO4J_URL",
-    "Error getting the NEO4J_URL environment variable."
-);
-
-const NEO4J_PASSWORD: &str = dotenv!(
-    "NEO4J_PASSWORD",
-    "Error getting the NEO4J_PASSWORD environment variable."
-);
+const NEO4J_URL: &str = dotenv!("NEO4J_URL");
+const NEO4J_PASSWORD: &str = dotenv!("NEO4J_PASSWORD");
 
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/api/v1")
-            .service(read)
-            .service(update)
+        scope("/api/v1/me")
+            .service(routes::read)
+            .service(routes::update)
     );
 }
 

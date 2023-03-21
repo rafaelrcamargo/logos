@@ -17,15 +17,8 @@ use utils::*;
 #[macro_use]
 extern crate dotenv_codegen;
 
-const REDIS_URL: &str = dotenv!(
-    "REDIS_URL",
-    "Error getting the REDIS_URL environment variable."
-);
-
-const SESSION_KEY: &str = dotenv!(
-    "SESSION_KEY",
-    "Error getting the SESSION_KEY environment variable."
-);
+const SESSION_KEY: &str = dotenv!("SESSION_KEY");
+const REDIS_URL: &str = dotenv!("REDIS_URL");
 
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(

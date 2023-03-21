@@ -8,7 +8,7 @@ use serde_json::json;
 use std::sync::Arc;
 use utils::error;
 
-#[get("/user/{id}")]
+#[get("/{id}")]
 pub async fn read(id: Path<String>, graph: Data<Arc<Graph>>) -> impl Responder {
     match graph
         .execute(

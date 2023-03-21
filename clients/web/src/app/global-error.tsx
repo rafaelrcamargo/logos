@@ -16,13 +16,13 @@ export const Error: FC<Props> = ({ error, reset }) => {
       }
     >
       <head></head>
-      <body className="center overflow-x-hidden font-sans antialiased gap-4">
+      <body className="center gap-4 overflow-x-hidden font-sans antialiased">
         <div className="flex gap-2">
           <h2 className="text-2xl">Something went wrong!</h2>
           <p className="text-md">{JSON.stringify(error.message)}</p>
         </div>
         <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700"
           onClick={() => reset()}
         >
           Try again

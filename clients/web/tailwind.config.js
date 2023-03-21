@@ -11,7 +11,7 @@ module.exports = {
       },
     },
   },
-  future: ["hoverOnlyWhenSupported", "respectDefaultRingColorOpacity"],
   experimental: ["optimizeUniversalDefaults"],
-  plugins: [require("@tailwindcss/typography")],
+  future: ["hoverOnlyWhenSupported", "respectDefaultRingColorOpacity"],
+  plugins: [require("@tailwindcss/typography"), require("tailwindcss-animate")],
 }

@@ -7,7 +7,7 @@ use neo4rs::{query as graph_query, Graph};
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::Arc;
-use user::{sanitize, Provider};
+use steward::{sanitize, Provider};
 use utils::error;
 
 #[derive(Deserialize)]
@@ -15,7 +15,7 @@ pub struct Update {
     provider: String
 }
 
-#[patch("/user")]
+#[patch("")]
 pub async fn update(
     body: String,
     query: Query<Update>,
