@@ -1,12 +1,13 @@
 {
   "name": "logos",
-  "author": "RafaelRCamargo",
   "description": "A news feed, a really good one!",
-  "devDependencies": {
-    "prettier": "^2.8.4"
-  },
+  "author": "Rafael R. Camargo (https://github.com/rafaelrcamargo)",
   "scripts": {
     "start": "sh tools/start.sh"
   },
-  "license": "Apache-2.0"
+  "devDependencies": {
+    "prettier": "^2.8.6",
+    "prettier-plugin-tailwindcss": "^0.2.5"
+  },
+  "license": "(MIT OR Apache-2.0)"
 }

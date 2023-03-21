@@ -1,8 +1,7 @@
 [workspace]
+members = ["./services/*"]
 
-members = [
-  "./services/gatekeeper",
-  "./services/locksmith",
-  "./services/steward",
-  "./services/utils",
-]
+[workspace.package]
+description = "A news feed, a really good one!"
+documentation = "https://github.com/rafaelrcamargo/logos"
+authors = ["Rafael R. Camargo (https://github.com/rafaelrcamargo)"]
