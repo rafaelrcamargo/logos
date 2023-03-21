@@ -13,7 +13,6 @@ Just hacking around with some ideas.
 
 ### Services
 
-- ~ Core
 - ! Auth
 - ~ Feed
 
@@ -41,18 +40,6 @@ flowchart TB
     %% Feed flow
     Client -- Feed --> Feeds_queue[(Feeds queue)]
 ```
-
-## Data
-
-Just some basic data structures, for visualization purposes.
-
-### User
-
-| Field      | Type      | Description        |
-| ---------- | --------- | ------------------ |
-| id         | int       | User ID            |
-| email      | string    | User email         |
-| created_at | timestamp | User creation date |
 
 ## TODOs
 
