@@ -2,12 +2,14 @@
   "name": "logos",
   "description": "A news feed, a really good one!",
   "author": "Rafael R. Camargo (https://github.com/rafaelrcamargo)",
+  "license": "(MIT OR Apache-2.0)",
   "scripts": {
-    "start": "sh tools/start.sh"
+    "start": "sh tools/start.sh",
+    "compose": "cd ./docker && docker compose --env-file ../.env",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css,scss,md}\" --ignore-path .gitignore"
   },
   "devDependencies": {
     "prettier": "^2.8.6",
     "prettier-plugin-tailwindcss": "^0.2.5"
-  },
-  "license": "(MIT OR Apache-2.0)"
+  }
 }

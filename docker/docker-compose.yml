@@ -1,4 +1,17 @@
 services:
+  web:
+    build:
+      context: ../clients/web
+      dockerfile: Dockerfile
+    container_name: web
+    restart: always
+    volumes:
+      - ../clients/web:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - 3000:3000
+
   redis: # Used for the OAuth2 server
     image: redis:latest
     container_name: logos-auth
