@@ -22,7 +22,7 @@ const REDIS_URL: &str = dotenv!("REDIS_URL");
 
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/api/v1/oauth")
+        scope("/api/v1")
             .service(routes::create)
             .service(routes::resolve)
     );
@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
             RedisActorSessionStore::new(REDIS_URL),
             Key::from(SESSION_KEY.as_bytes())
         )
+        .cookie_secure(false)
         .cookie_http_only(false)
         .cookie_same_site(SameSite::Lax)
         .build();

@@ -26,14 +26,12 @@ const Layout: FC<PropsWithChildren> = ({ children }) => {
     <html
       lang="en"
       className={cn(
-        "bg-neutral-100 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100",
+        "overflow-x-hidden bg-neutral-100 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100",
         sentient.variable,
         satoshi.variable
       )}
     >
-      <body className="overflow-x-hidden font-sans antialiased">
-        {children}
-      </body>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   )
 }

@@ -91,7 +91,7 @@ impl OAuthClient {
         )
         .set_redirect_uri(
             RedirectUrl::new(
-                "http://127.0.0.1:8081/api/v1/oauth/resolve".to_string()
+                "http://localhost/api/v1/oauth/resolve".to_string()
             )
             .unwrap()
         )
@@ -144,7 +144,7 @@ pub async fn update_user(
     user: &Map<String, Value>
 ) -> Result<reqwest::Response, reqwest::Error> {
     http.patch(&format!(
-        "http://127.0.0.1:8082/api/v1/me?provider={}",
+        "http://localhost/api/v1/user?provider={}",
         provider.to_string()
     ))
     .json::<Map<String, Value>>(user)

@@ -22,10 +22,8 @@ pub async fn create(
     session: Session
 ) -> impl Responder {
     if is_valid_for(&session) {
-        println!("ID: {:?}", session.get::<String>("id"));
-
         return HttpResponse::TemporaryRedirect()
-            .append_header(("Location", "http://127.0.0.1:3000"))
+            .append_header(("Location", "http://localhost"))
             .finish();
     }
 
