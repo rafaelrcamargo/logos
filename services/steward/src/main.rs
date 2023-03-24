@@ -18,7 +18,7 @@ const NEO4J_PASSWORD: &str = dotenv!("NEO4J_PASSWORD");
 
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/api/v1/me")
+        scope("/api/v1")
             .service(routes::read)
             .service(routes::update)
     );

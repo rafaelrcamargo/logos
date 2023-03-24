@@ -13,7 +13,7 @@ use redis::Client as RedisClient;
 use reqwest::{Client as HTTPClient, Url};
 use serde::Deserialize;
 use serde_json::Value;
-use utils::{error, warn};
+use utils::{error, warn, info};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -127,7 +127,7 @@ pub async fn resolve(
             return HttpResponse::InternalServerError().finish();
         }
         Ok(_) => {
-            println!("User session created");
+            info!("User session created");
         }
     }
 
@@ -137,7 +137,7 @@ pub async fn resolve(
             HttpResponse::InternalServerError().finish()
         }
         Ok(_) => {
-            let mut url = Url::parse("http://127.0.0.1:3000").unwrap();
+            let mut url = Url::parse("http://localhost").unwrap();
             let mut query = String::from("id=");
             query.push_str(&id);
 
