@@ -1,6 +1,6 @@
 const Home = () => {
   return (
-    <div className="prose prose-neutral my-40 dark:prose-invert lg:prose-lg">
+    <div className="prose prose-neutral dark:prose-invert lg:prose-lg my-40">
       <h1>Welcome to Logos!</h1>
       <p>
         Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptas dicta
