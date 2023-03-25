@@ -35,7 +35,7 @@ pub async fn read(req: HttpRequest, graph: Data<Arc<Graph>>) -> impl Responder {
                         }).to_string()
                     )
             } else {
-                return HttpResponse::NotFound().finish();
+                HttpResponse::NotFound().finish()
             }
         }
     }

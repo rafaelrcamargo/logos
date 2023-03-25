@@ -62,16 +62,19 @@ Those are the platforms I'm planning to support.
 And these are the main services I'm planning to use.
 
 - Auth
+
   - [OAuth 2](https://oauth.net/2/)
     - Providers: GitHub, Discord, Spotify.
   - [Redis](https://redis.io/)
     - For storing temporary data.
 
 - User
+
   - [Neo4j](https://neo4j.com/)
     - For storing user data and provide user relations.
 
 - Posts
+
   - [MeiliSearch](https://www.meilisearch.com/)
     - For full-text search + storing posts data.
 
