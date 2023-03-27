@@ -3,11 +3,12 @@ use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
 use actix_web::{
     cookie::{Key, SameSite},
     middleware::{Logger, NormalizePath, TrailingSlash},
-    web::{scope, ServiceConfig},
+    web::{scope, Data, ServiceConfig},
     App, HttpServer
 };
 use utils::*;
 
+mod config;
 mod routes;
 
 #[macro_use]
@@ -16,6 +17,8 @@ extern crate dotenv_codegen;
 const SESSION_KEY: &str = dotenv!("SESSION_KEY");
 const REDIS_URL: &str = dotenv!("REDIS_URL");
 
+use crate::config::Config;
+
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(scope("/api/v1").service(routes::intercept));
 }
@@ -23,6 +26,8 @@ fn app_config(cfg: &mut ServiceConfig) {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     logger_setup(); // Setup logger
+
+    let config: Config = confy::load_path(config::CONFIG_FILE_NAME).unwrap(); // Load the config
 
     HttpServer::new(move || {
         let cors = Cors::permissive(); // Setup the CORS config
@@ -44,6 +49,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(logger)
             .wrap(session)
             .wrap(normalize)
+            .app_data(Data::new(config.clone()))
             .configure(app_config)
     })
     .bind(("127.0.0.1", 8080))?

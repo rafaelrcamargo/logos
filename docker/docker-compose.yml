@@ -22,7 +22,7 @@ services:
 
   redis: # Used for the OAuth2 server
     image: redis:alpine
-    container_name: auth
+    container_name: session
     restart: always
     ports:
       - 6379:6379

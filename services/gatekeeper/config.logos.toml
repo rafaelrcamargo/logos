@@ -1,0 +1,4 @@
+[locations]
+
+[locations."/api/v1/user"]
+role = "user"

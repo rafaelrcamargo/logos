@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["avatars.githubusercontent.com"],
+    domains: ["i.scdn.co", "avatars.githubusercontent.com"],
   },
   experimental: {
     // mdxRs: true,

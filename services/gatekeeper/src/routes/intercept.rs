@@ -1,5 +1,7 @@
 use actix_session::Session;
-use actix_web::{get, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, web::Data, HttpRequest, HttpResponse, Responder};
+
+use crate::config::Config;
 
 struct User {
     id: String,
@@ -22,19 +24,38 @@ impl User {
 }
 
 #[get("/{tail:.*}")]
-pub async fn intercept(session: Session, req: HttpRequest) -> impl Responder {
+pub async fn intercept(
+    session: Session,
+    config: Data<Config>,
+    req: HttpRequest
+) -> impl Responder {
     let uri = match req.headers().get("X-Original-URI") {
         Some(uri) => uri.to_str().unwrap(),
+        None => return HttpResponse::BadRequest().finish()
+    };
+
+    let uri = uri.split("?").next().unwrap();
+    println!("URI: {}", uri);
+
+    let location = match config.locations.get(uri) {
+        Some(location) => location,
         None => return HttpResponse::Forbidden().finish()
     };
 
     let user = User::new(session);
-    if uri == "/api/v1/user" && user.role == "user" {
+    println!("UID: {}", user.id);
+
+    if user.id.is_empty() {
+        // TODO: Handle the case where the service is updating the user's
         return HttpResponse::Ok()
             .append_header(("X-User-Id", user.id))
             .finish();
-    } else if user.id.is_empty() {
-        return HttpResponse::Ok().finish();
+    }
+
+    if user.role == location.role {
+        return HttpResponse::Ok()
+            .append_header(("X-User-Id", user.id))
+            .finish();
     }
 
     HttpResponse::Forbidden().finish()

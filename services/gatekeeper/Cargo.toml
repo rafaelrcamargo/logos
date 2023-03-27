@@ -9,4 +9,5 @@ actix-session.workspace = true
 actix-web.workspace = true
 confy = "0.5.1"
 dotenv_codegen.workspace = true
+serde.workspace = true
 utils.workspace = true
