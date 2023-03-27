@@ -2,6 +2,13 @@
 members = ["./services/*"]
 
 [workspace.package]
+authors = ["Rafael R. Camargo (https://github.com/rafaelrcamargo)"]
 description = "A news feed, a really good one!"
 documentation = "https://github.com/rafaelrcamargo/logos"
-authors = ["Rafael R. Camargo (https://github.com/rafaelrcamargo)"]
+
+[workspace.dependencies]
+actix-cors = "0.6.4"
+actix-session = {version = "0.7.2", features = ["redis-actor-session"]}
+actix-web = "4.3.0"
+dotenv_codegen = "0.15.0"
+utils = {path = "services/utils"}
