@@ -1,3 +1,4 @@
+use crate::config::{Config, CONFIG_FILE_NAME};
 use actix_cors::Cors;
 use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
 use actix_web::{
@@ -17,8 +18,6 @@ extern crate dotenv_codegen;
 const SESSION_KEY: &str = dotenv!("SESSION_KEY");
 const REDIS_URL: &str = dotenv!("REDIS_URL");
 
-use crate::config::Config;
-
 fn app_config(cfg: &mut ServiceConfig) {
     cfg.service(scope("/api/v1").service(routes::intercept));
 }
@@ -27,7 +26,7 @@ fn app_config(cfg: &mut ServiceConfig) {
 async fn main() -> std::io::Result<()> {
     logger_setup(); // Setup logger
 
-    let config: Config = confy::load_path(config::CONFIG_FILE_NAME).unwrap(); // Load the config
+    let config: Config = confy::load_path(CONFIG_FILE_NAME).unwrap(); // Load the config
 
     HttpServer::new(move || {
         let cors = Cors::permissive(); // Setup the CORS config

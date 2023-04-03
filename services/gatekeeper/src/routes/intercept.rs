@@ -34,9 +34,7 @@ pub async fn intercept(
         None => return HttpResponse::BadRequest().finish()
     };
 
-    let uri = uri.split("?").next().unwrap();
-    println!("URI: {}", uri);
-
+    let uri = uri.split('?').next().unwrap();
     let location = match config.locations.get(uri) {
         Some(location) => location,
         None => return HttpResponse::Forbidden().finish()
