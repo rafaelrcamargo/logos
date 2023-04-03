@@ -44,13 +44,6 @@ const logError = (err: any) => {
   return undefined
 }
 
-type Cookie = {
-  /** A string with the name of a cookie. */
-  name: string
-  /** A string containing the value of the cookie. */
-  value: string
-}
-
 const getUser = async (session: string | undefined) => {
   if (!session) return undefined
 
@@ -79,7 +72,7 @@ export const Header = async () => {
   const user = await getUser(session)
 
   return (
-    <header className="fixed inset-0 flex h-16 w-screen border-b border-neutral-300/50 bg-neutral-100/30 px-8 shadow-lg backdrop-blur-md dark:border-neutral-800/50 dark:bg-neutral-900/30">
+    <header className="glass fixed inset-0 flex h-16 w-screen border-b px-8">
       <div className="m-auto flex w-full max-w-4xl items-center justify-between">
         <a href="/" className="center gap-2 text-3xl">
           <Library />

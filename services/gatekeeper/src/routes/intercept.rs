@@ -1,5 +1,6 @@
 use actix_session::Session;
 use actix_web::{get, web::Data, HttpRequest, HttpResponse, Responder};
+use utils::debug;
 
 use crate::config::Config;
 
@@ -34,8 +35,8 @@ pub async fn intercept(
         None => return HttpResponse::BadRequest().finish()
     };
 
-    let uri = uri.split("?").next().unwrap();
-    println!("URI: {}", uri);
+    let uri = uri.split('?').next().unwrap();
+    debug!("URI: {}", uri);
 
     let location = match config.locations.get(uri) {
         Some(location) => location,
@@ -43,7 +44,7 @@ pub async fn intercept(
     };
 
     let user = User::new(session);
-    println!("UID: {}", user.id);
+    debug!("UID: {}", user.id);
 
     if user.id.is_empty() {
         // TODO: Handle the case where the service is updating the user's

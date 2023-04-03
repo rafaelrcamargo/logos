@@ -22,6 +22,9 @@
 }
 
 @layer components {
+  .glass {
+    @apply border-neutral-300/50 bg-neutral-100/30 shadow-lg backdrop-blur-md dark:border-neutral-800/50 dark:bg-neutral-900/30;
+  }
   .center {
     @apply flex items-center justify-center;
   }

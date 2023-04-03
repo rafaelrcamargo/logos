@@ -13,7 +13,7 @@ use redis::Client as RedisClient;
 use reqwest::{Client as HTTPClient, Url};
 use serde::Deserialize;
 use serde_json::Value;
-use utils::{error, warn, info};
+use utils::{error, warn, debug};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -127,7 +127,7 @@ pub async fn resolve(
             return HttpResponse::InternalServerError().finish();
         }
         Ok(_) => {
-            info!("User session created");
+            debug!("User session created");
         }
     }
 
