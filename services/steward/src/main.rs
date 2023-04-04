@@ -21,6 +21,10 @@ fn app_config(cfg: &mut ServiceConfig) {
         scope("/api/v1")
             .service(routes::read)
             .service(routes::update)
+            .service(
+                scope("/recommendation")
+                    .service(routes::recommendation::follow_worthy)
+            )
     );
 }
 

@@ -10,10 +10,10 @@ use oauth2::{
     TokenResponse
 };
 use redis::Client as RedisClient;
-use reqwest::{Client as HTTPClient, Url};
+use reqwest::Client as HTTPClient;
 use serde::Deserialize;
 use serde_json::Value;
-use utils::{error, warn, debug};
+use utils::{debug, error, warn};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -84,9 +84,6 @@ pub async fn resolve(
         Ok(token_result) => token_result
     };
 
-    // Create a new UUID
-    let id = Uuid::new_v4().to_string();
-
     // Get the user data
     let user =
         match get_user(&http, &provider, token_result.access_token().secret())
@@ -96,22 +93,27 @@ pub async fn resolve(
                 error!("Error getting USER data from OAuth provider: {e:?}");
                 return HttpResponse::InternalServerError().finish();
             }
-            Ok(user) => match user.as_object() {
-                None => {
-                    error!("Error parsing USER data");
-                    return HttpResponse::InternalServerError().finish();
-                }
-                Some(user) => {
-                    let mut user = user.to_owned();
-                    user.insert(
-                        "id".to_string(),
-                        Value::String(id.to_string())
-                    );
-
-                    user
-                }
-            }
+            Ok(user) => user
         };
+
+    // tries to get the user email to use as the session identifier, if not available, use the user username
+    let identifier = match user.get("email") {
+        None => match user.get("username") {
+            None => {
+                error!("Error getting USER identifier");
+                return HttpResponse::InternalServerError().finish();
+            }
+            Some(username) => username
+        },
+        Some(email) => email
+    };
+
+    // Create a new UUID
+    let id = Uuid::new_v5(
+        &Uuid::NAMESPACE_OID,
+        identifier.as_str().unwrap().as_bytes()
+    )
+    .to_string();
 
     if session
         .insert("id", id.to_string())
@@ -120,6 +122,9 @@ pub async fn resolve(
         error!("Error creating USER session");
         return HttpResponse::InternalServerError().finish();
     }
+
+    let mut user = user.as_object().unwrap().to_owned();
+    user.insert("id".to_string(), Value::String(id.to_string()));
 
     match session.insert("role", "user".to_string()) {
         Err(_) => {
@@ -136,16 +141,8 @@ pub async fn resolve(
             error!("Error saving USER data: {e:?}");
             HttpResponse::InternalServerError().finish()
         }
-        Ok(_) => {
-            let mut url = Url::parse("http://localhost").unwrap();
-            let mut query = String::from("id=");
-            query.push_str(&id);
-
-            url.set_query(Some(query.as_str()));
-
-            HttpResponse::TemporaryRedirect()
-                .append_header(("Location", url.to_string()))
-                .finish()
-        }
+        Ok(_) => HttpResponse::TemporaryRedirect()
+            .append_header(("Location", "http://localhost".to_string()))
+            .finish()
     }
 }

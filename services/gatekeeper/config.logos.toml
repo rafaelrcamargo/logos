@@ -2,3 +2,6 @@
 
 [locations."/api/v1/user"]
 role = "user"
+
+[locations."/api/v1/user/recommendation/follow-worthy"]
+role = "user"
