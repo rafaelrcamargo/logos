@@ -44,6 +44,8 @@ const base = {
 }
 
 export const metadata: Metadata = {
+  viewport:
+    "height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, target-densitydpi=device-dpi",
   title: {
     default: base.title,
     template: "%s | Logos",

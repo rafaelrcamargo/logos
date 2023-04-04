@@ -6,10 +6,10 @@ export const TabBar: FC<{}> = ({}) => (
     <a href="/">
       <Home width={28} height={28} />
     </a>
-    <a href="#">
+    <a href="/">
       <Search width={28} height={28} />
     </a>
-    <a href="#">
+    <a href="/">
       <User width={28} height={28} />
     </a>
   </div>

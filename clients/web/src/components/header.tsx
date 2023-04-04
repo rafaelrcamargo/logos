@@ -40,7 +40,7 @@ type User = {
 }
 
 const logError = (err: any) => {
-  console.error("Error: ", JSON.stringify(err))
+  console.error("Error (Header): ", JSON.stringify(err))
   return undefined
 }
 
@@ -55,11 +55,15 @@ const getUser = async (session: string | undefined) => {
 
   if (!res.ok) return logError(res.status)
 
-  const json = await res.json()
-  if (json?.error) return logError(json.error)
-
   try {
-    return json as User
+    const json = await res.json()
+    if (json?.error) return logError(json.error)
+
+    try {
+      return json as User
+    } catch (e) {
+      return logError(e)
+    }
   } catch (e) {
     return logError(e)
   }
@@ -69,7 +73,7 @@ import { cookies } from "next/headers"
 
 export const Header = async () => {
   const session = cookies().get("id")?.value
-  const user = await getUser(session)
+  const user = await getUser("session")
 
   return (
     <header className="glass fixed inset-0 flex h-16 w-screen border-b px-8">

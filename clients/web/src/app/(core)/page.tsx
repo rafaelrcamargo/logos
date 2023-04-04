@@ -1,7 +1,10 @@
+import { FW } from "components/follow-worthy"
+
 const Home = () => {
   return (
     <div className="prose prose-neutral dark:prose-invert lg:prose-lg my-40">
       <h1>Welcome to Logos!</h1>
+
       <p>
         Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptas dicta
         possimus maiores esse placeat unde numquam non! Sunt officia corporis
@@ -28,6 +31,12 @@ const Home = () => {
         consequatur minima aliquid deleniti reprehenderit, soluta eveniet
         excepturi repudiandae dolore alias ut quasi incidunt velit placeat
         voluptatem nemo. Adipisci odio labore, pariatur similique, natus
+      </p>
+
+      {/* @ts-expect-error Async Server Component */}
+      <FW />
+
+      <p>
         voluptatum corporis necessitatibus iste laborum, molestiae iure cum
         nostrum quia quam tempore aspernatur eaque numquam laboriosam
         accusantium veritatis. Obcaecati facere amet placeat aut eaque beatae
