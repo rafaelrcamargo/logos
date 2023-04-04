@@ -3,7 +3,12 @@ import { Github, Discord, Spotify } from "components/icons"
 import { cn } from "lib/utils"
 import Image from "next/image"
 
-const providers = {
+type Provider = "github" | "discord" | "spotify"
+type Providers = {
+  [key in Provider]: [FC, string]
+}
+
+const providers: Providers = {
   github: [Github, "fill-slate-800 dark:fill-slate-200"],
   discord: [Discord, "fill-indigo-500"],
   spotify: [Spotify, "fill-green-500"],
