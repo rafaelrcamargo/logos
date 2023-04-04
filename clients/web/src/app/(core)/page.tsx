@@ -30,14 +30,14 @@ const Home = () => {
         Obcaecati magnam necessitatibus iure illum vero? Consequuntur iste
         consequatur minima aliquid deleniti reprehenderit, soluta eveniet
         excepturi repudiandae dolore alias ut quasi incidunt velit placeat
-        voluptatem nemo. Adipisci odio labore, pariatur similique, natus
+        voluptatem nemo. Adipisci odio labore, pariatur similique, natus.
       </p>
 
       {/* @ts-expect-error Async Server Component */}
       <FW />
 
       <p>
-        voluptatum corporis necessitatibus iste laborum, molestiae iure cum
+        Voluptatum corporis necessitatibus iste laborum, molestiae iure cum
         nostrum quia quam tempore aspernatur eaque numquam laboriosam
         accusantium veritatis. Obcaecati facere amet placeat aut eaque beatae
         voluptate, molestias sunt aspernatur doloremque ullam saepe provident

@@ -34,7 +34,7 @@ const Auth = () => (
         ))}
       </div>
     </div>
-    <div className="relative -mb-[40%] h-screen w-screen overflow-hidden rounded-[2rem] object-none shadow-2xl shadow-neutral-300/50 dark:shadow-neutral-900 lg:mb-0 lg:-mr-[20%] lg:w-4/5">
+    <div className="relative -mb-[40%] h-screen w-screen overflow-hidden rounded-[2rem] object-none shadow-2xl shadow-neutral-300/50 dark:shadow-neutral-900 lg:-mr-[20%] lg:mb-0 lg:w-4/5">
       <Image
         fill
         src="/auth.webp"
