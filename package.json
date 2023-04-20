@@ -1,15 +1,17 @@
 {
-  "name": "logos",
-  "description": "A news feed, a really good one!",
-  "license": "(MIT OR Apache-2.0)",
-  "author": "Rafael R. Camargo (https://github.com/rafaelrcamargo)",
-  "scripts": {
-    "compose": "cd ./docker && docker compose --env-file ../.env",
-    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\" --ignore-path .gitignore",
-    "start": "sh tools/start.sh"
-  },
-  "devDependencies": {
-    "prettier": "^2.8.7",
-    "prettier-plugin-tailwindcss": "^0.2.6"
-  }
+	"name": "logos",
+	"description": "A news feed, a really good one!",
+	"license": "(MIT OR Apache-2.0)",
+	"author": "Rafael R. Camargo (https://github.com/rafaelrcamargo)",
+	"scripts": {
+		"compose": "cd ./docker && docker compose --env-file ../.env",
+		"format": "prettier --write \"**/*.{ts,tsx,css,json,md}\" --ignore-path .gitignore",
+		"release": "changelogen --release --output ./docs/CHANGELOG.md && git push --follow-tags",
+		"start": "sh tools/start.sh"
+	},
+	"devDependencies": {
+		"changelogen": "^0.5.3",
+		"prettier": "^2.8.7",
+		"prettier-plugin-tailwindcss": "^0.2.7"
+	}
 }

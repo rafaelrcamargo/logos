@@ -8,7 +8,7 @@ import { get } from "lib/utils"
 export const FW = async () => {
   const session = cookies().get("id")?.value
   const candidates = session
-    ? await get<Array<Candidade>>("/user/recommendation/follow-worthy", session)
+    ? await get<Candidade[]>("/user/recommendation/follow-worthy", session)
     : undefined
 
   return (
@@ -17,19 +17,19 @@ export const FW = async () => {
         <div className="flex flex-col items-center">
           <h1 className="mt-4 text-xl font-bold">Follow-worthy accounts:</h1>
           <div className="flex gap-4">
-            {candidates.map(candidate => (
+            {candidates.map(({ id, name, image }) => (
               <div
-                key={candidate.id}
+                key={id}
                 className="flex flex-col items-center duration-150 hover:scale-105"
               >
                 <Image
-                  src={candidate.image}
-                  alt={candidate.name}
+                  src={image}
+                  alt={name}
                   width={86}
                   height={86}
                   className="m-0 rounded-full shadow-sm"
                 />
-                <p className="text-sm">{candidate.name}</p>
+                <p className="text-sm">{name}</p>
               </div>
             ))}
           </div>

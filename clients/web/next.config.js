@@ -4,12 +4,9 @@ const nextConfig = {
     domains: ["i.scdn.co", "picsum.photos", "avatars.githubusercontent.com"],
   },
   experimental: {
-    // mdxRs: true,
     appDir: true,
+    // mdxRs: true,
     typedRoutes: true,
-    fontLoaders: [
-      { loader: "@next/font/google", options: { subsets: ["latin"] } },
-    ],
   },
 }
 

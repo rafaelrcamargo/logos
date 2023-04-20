@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 
 import type { User } from "types/api"
-export const Menu: FC<{ user: User }> = ({ user }) => (
+export const Menu: FC<{ user: User }> = ({ user: { image, username } }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button
@@ -38,8 +38,8 @@ export const Menu: FC<{ user: User }> = ({ user }) => (
         className="relative rounded-full p-0 focus:ring-0 focus:ring-offset-0"
       >
         <Image
-          src={user.image}
-          alt={user.username + "'s profile picture"}
+          src={image}
+          alt={`${username}'s profile picture`}
           width={36}
           height={36}
           loading="lazy"

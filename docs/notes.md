@@ -1,20 +1,6 @@
-# Notes :)
+# Notes
 
 Just hacking around with some ideas.
-
-## Architecture
-
-> Note: ! = Ongoing, ? = Maybe, ~ = Next
-
-### Clients
-
-- ! Web
-- ? Mobile
-
-### Services
-
-- ! Auth
-- ~ Feed
 
 ## Flow
 
@@ -41,10 +27,6 @@ flowchart TB
     Client -- Feed --> Feeds_queue[(Feeds queue)]
 ```
 
-## TODOs
-
-- [x] Better error handling
-
 ## Stack
 
 Tech I'm using or planning to use.
@@ -62,22 +44,16 @@ Those are the platforms I'm planning to support.
 And these are the main services I'm planning to use.
 
 - Auth
-
   - [OAuth 2](https://oauth.net/2/)
     - Providers: GitHub, Discord, Spotify.
   - [Redis](https://redis.io/)
-    - For storing temporary data.
-
+    - For storing temporary data & sessions.
 - User
-
   - [Neo4j](https://neo4j.com/)
     - For storing user data and provide user relations.
-
 - Posts
-
   - [MeiliSearch](https://www.meilisearch.com/)
     - For full-text search + storing posts data.
-
 - Feed
   - [RabbitMQ](https://www.rabbitmq.com/)
     - For queueing posts on user feeds.
