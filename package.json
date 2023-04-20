@@ -11,6 +11,7 @@
 	},
 	"devDependencies": {
 		"changelogen": "^0.5.3",
+		"concurrently": "^8.0.1",
 		"prettier": "^2.8.7",
 		"prettier-plugin-tailwindcss": "^0.2.7"
 	}
