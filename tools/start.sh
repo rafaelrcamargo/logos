@@ -11,7 +11,7 @@
 if [ $1 = '-c' ]; then
     echo 'Starting client...'
     cd clients/$2
-    yarn dev
+    pnpm dev
 elif [ $1 = '-s' ]; then
     echo 'Starting service...'
     cd services/$2

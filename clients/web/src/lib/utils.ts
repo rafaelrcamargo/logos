@@ -16,12 +16,12 @@ export const get = async <T>(
   opts?: RequestInit
 ) => {
   const resp = await fetch(`http://localhost/api/v1${path}`, {
-			headers: {
-				...(session && { Cookie: `id=${session}` }),
-				...opts?.headers,
-			},
-			...opts,
-		})
+    headers: {
+      ...(session && { Cookie: `id=${session}` }),
+      ...opts?.headers,
+    },
+    ...opts,
+  })
 
   if (!resp.ok) return warn(resp.status)
 
