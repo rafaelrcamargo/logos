@@ -1,9 +1,9 @@
 # 📰 Logos
 
-A news feed, a really good one!
-
 > **Warning**
 > This app is a work in progress. I'm building this in public.
+
+A news feed, a really good one!
 
 ## 📜 License
 
